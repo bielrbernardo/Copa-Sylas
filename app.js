@@ -60,25 +60,52 @@ const mkGender = (id) => ({
 });
 
 const INITIAL = { mods: MODS_META.map(m => ({ ...m, genders:{ masculino:mkGender(m.id), feminino:mkGender(m.id) } })) };
+
+// CHAVEAMENTO MASCULINO - AJUSTADO CONFORME O PAPEL OFICIAL
 INITIAL.mods[0].genders.masculino.rounds = [
-  {id:"tm1",name:"1ª Fase",matches:[
-    {id:"a1",p1:"Christopher",p2:"José",winner:null},{id:"a2",p1:"Paulo",p2:"João Pedro",winner:null},
-    {id:"a3",p1:"Vitor",p2:"Ruan",winner:null},{id:"a4",p1:"Jullio",p2:"Eduardo",winner:null},
-    {id:"a5",p1:"Pedro V",p2:"Leo A",winner:null},{id:"a6",p1:"Luiz H",p2:"Gustavo",winner:null},
-    {id:"a7",p1:"Endrew",p2:"Pietro",winner:null},{id:"a8",p1:"Marcelo",p2:"Davi",winner:null},
-    {id:"a9",p1:"Leonardo D",p2:"Arthur",winner:null},{id:"a10",p1:"Hector",p2:"Marcos",winner:null},
+  {id:"tm1",name:"Oitavas de Final",matches:[
+    {id:"a1",p1:"Christopher",p2:"José",winner:null},
+    {id:"a2",p1:"Paulo",p2:"João Pedro",winner:null},
+    {id:"a3",p1:"Vitor",p2:"Ruan",winner:null},
+    {id:"a4",p1:"Jullio",p2:"Eduardo",winner:null},
+    {id:"a5",p1:"Pedro V",p2:"Leo A",winner:null},
+    {id:"a6",p1:"Luiz H",p2:"Gustavo",winner:null},
+    {id:"a7",p1:"Endrew",p2:"Pietro",winner:null},
+    {id:"a8",p1:"Marcelo",p2:"Davi",winner:null},
+    {id:"a9",p1:"Leonardo D",p2:"Arthur",winner:null},
+    {id:"a10",p1:"Hector",p2:"Marcos",winner:null},
   ]},
-  {id:"tm2",name:"Quartas de Final",matches:[{id:"b1",p1:null,p2:null,winner:null},{id:"b2",p1:null,p2:null,winner:null},{id:"b3",p1:null,p2:null,winner:null},{id:"b4",p1:null,p2:null,winner:null}]},
-  {id:"tm3",name:"Semifinal",matches:[{id:"c1",p1:null,p2:null,winner:null},{id:"c2",p1:null,p2:null,winner:null}]},
-  {id:"tm4",name:"Final",matches:[{id:"d1",p1:null,p2:null,winner:null}]},
+  {id:"tm2",name:"Quartas de Final",matches:[
+    {id:"b1",p1:null,p2:null,winner:null},
+    {id:"b2",p1:null,p2:null,winner:null},
+    {id:"b3",p1:null,p2:null,winner:null},
+    {id:"b4",p1:null,p2:null,winner:null},
+    {id:"b5",p1:null,p2:null,winner:null}
+  ]},
+  {id:"tm3",name:"Semifinal",matches:[
+    {id:"c1",p1:null,p2:null,winner:null},
+    {id:"c2",p1:null,p2:null,winner:null}
+  ]},
+  {id:"tm4",name:"Final",matches:[
+    {id:"d1",p1:null,p2:null,winner:null}
+  ]},
 ];
+
+// CHAVEAMENTO FEMININO - AJUSTADO COM OS BYES NAS EXTREMIDADES
 INITIAL.mods[0].genders.feminino.rounds = [
   {id:"tf1",name:"Quartas de Final",matches:[
-    {id:"f1",p1:"Ana Bella",p2:"Vitória",winner:null},{id:"f2",p1:"Thifany",p2:"BYE",winner:"Thifany"},
-    {id:"f3",p1:"Milena",p2:"Maria Cecília",winner:null},{id:"f4",p1:"Maria Vitória",p2:"BYE",winner:"Maria Vitória"},
+    {id:"f1",p1:"Ana Bella",p2:"BYE",winner:"Ana Bella"},
+    {id:"f2",p1:"Vitória",p2:"Thifany",winner:null},
+    {id:"f3",p1:"Milena",p2:"Maria Cecília",winner:null},
+    {id:"f4",p1:"Maria Vitória",p2:"BYE",winner:"Maria Vitória"},
   ]},
-  {id:"tf2",name:"Semifinal",matches:[{id:"f5",p1:null,p2:null,winner:null},{id:"f6",p1:null,p2:null,winner:null}]},
-  {id:"tf3",name:"Final",matches:[{id:"f7",p1:null,p2:null,winner:null}]},
+  {id:"tf2",name:"Semifinal",matches:[
+    {id:"f5",p1:null,p2:null,winner:null},
+    {id:"f6",p1:null,p2:null,winner:null}
+  ]},
+  {id:"tf3",name:"Final",matches:[
+    {id:"f7",p1:null,p2:null,winner:null}
+  ]},
 ];
 
 // ─── SVG DECO ─────────────────────────────────────────────────────────────────
@@ -298,7 +325,7 @@ function Home({ mods, onNav, isMobile }) {
             <div key={mod.id} className="mcard" onClick={()=>onNav(mod.id)} style={{border:`1px solid ${mod.accent}44`,boxShadow:`0 4px 18px ${mod.accent}14`}}>
               <div style={{position:"absolute",left:0,top:0,bottom:0,width:3,background:`linear-gradient(180deg,${mod.accent},transparent)`}}/>
               <span style={{fontSize:35,filter:`drop-shadow(0 0 8px ${mod.accent}88)`}}>{mod.emoji}</span>
-              <span style={{color:mod.accent,fontWeight:800,fontSize:12,letterSpacing:2,textTransform:"uppercase",textAlign:"center",lineHeight:1.3}}>{mod.name}</span>
+              <span style={{color={mod.accent},fontWeight:800,fontSize:12,letterSpacing:2,textTransform:"uppercase",textAlign:"center",lineHeight:1.3}}>{mod.name}</span>
               <div style={{display:"flex",gap:5}}>
                 <div style={{background:"#1565C022",border:"1px solid #1565C055",borderRadius:4,padding:"3px 7px",fontSize:10,color:"#64b5f6",fontWeight:700}}>♂</div>
                 <div style={{background:"#e91e8c22",border:"1px solid #e91e8c55",borderRadius:4,padding:"3px 7px",fontSize:10,color:"#f48fb1",fontWeight:700}}>♀</div>
@@ -368,7 +395,7 @@ function Bracket({ rounds, gc, canEdit, onWin, onEdit, onAddMatch, onRename, onA
             <button onClick={onAddRound} style={{background:"transparent",border:"1px dashed rgba(255,223,0,.28)",borderRadius:8,padding:"13px 10px",color:"rgba(255,223,0,.45)",fontSize:11,cursor:"pointer",fontFamily:"'Inter',sans-serif",writingMode:"vertical-rl"}}>+ Nova Fase</button>
           </div>
         )}
-        {champ&&(
+        {champ&&champ!=="BYE"&&(
           <div style={{display:"flex",flexDirection:"column",alignItems:"center",paddingTop:24,gap:8}}>
             <div style={{fontSize:9,fontWeight:800,letterSpacing:3,color:MGOLD}}>★ CAMPEÃO ★</div>
             <div style={{background:"linear-gradient(135deg,#FFDF00,#FFB800,#cc8800)",color:"#0a0f00",borderRadius:10,padding:"13px 20px",fontWeight:900,fontSize:14,boxShadow:"0 0 28px rgba(255,223,0,.45)",border:"2px solid rgba(255,255,255,.25)",whiteSpace:"nowrap"}}>
@@ -439,12 +466,17 @@ function ModalityPage({ mod, onChange, canEdit, isMobile }) {
   const [gender,setGender]=useState("masculino");
   const [editMatch,setEditMatch]=useState(null);
   const [showBulk,setShowBulk]=useState(false);
-  const gc  = gender==="masculino"?M_COLOR:F_COLOR;
+  const gc   = gender==="masculino"?M_COLOR:F_COLOR;
   const gbg = gender==="masculino"?M_BG:F_BG;
   const gData = mod.genders[gender];
   const upd=(newRounds)=>onChange({...mod,genders:{...mod.genders,[gender]:{rounds:propagate(newRounds)}}});
   const handleWin    =(mid,w)=>upd(gData.rounds.map(r=>({...r,matches:r.matches.map(m=>m.id===mid?{...m,winner:w}:m)})));
-  const handleSave   =(mid,p1,p2)=>upd(gData.rounds.map(r=>({...r,matches:r.matches.map(m=>m.id===mid?{...m,p1,p2,winner:null}:m)})));
+  const handleSave   = (mid,p1,p2)=>{
+    let initialWinner = null;
+    if(p1 === "BYE" && p2 && p2 !== "BYE") initialWinner = p2;
+    if(p2 === "BYE" && p1 && p1 !== "BYE") initialWinner = p1;
+    return upd(gData.rounds.map(r=>({...r,matches:r.matches.map(m=>m.id===mid?{...m,p1,p2,winner:initialWinner}:m)})));
+  };
   const handleRemove =(mid)=>upd(gData.rounds.map(r=>({...r,matches:r.matches.filter(m=>m.id!==mid)})));
   const handleAddM   =(rid)=>upd(gData.rounds.map(r=>r.id===rid?{...r,matches:[...r.matches,mkMatch()]}:r));
   const handleRename =(rid,name)=>upd(gData.rounds.map(r=>r.id===rid?{...r,name}:r));
