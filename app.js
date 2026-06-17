@@ -195,37 +195,64 @@ function Login({ onLogin }) {
 }
 
 // ─── SIDEBAR ──────────────────────────────────────────────────────────────────
-function Sidebar({ mods, page, onNav, isOpen, isMobile, user, onLogout }) {
+function Sidebar({ mods, page, onNav, isOpen, isMobile, user, onLogout, collapsed }) {
   const items=[{id:"home",label:"Início",emoji:"🏠"},...mods.map(m=>({id:m.id,label:m.name,emoji:m.emoji})),...(user?.role==="admin"?[{id:"admin",label:"Admin",emoji:"⚙️"}]:[])];
+  const W = isMobile ? 260 : (collapsed ? 56 : 220);
   return (
-    <aside className={`sidebar${isMobile&&isOpen?" open":""}`}>
-      <div style={{padding:"14px 12px 12px",borderBottom:"1px solid rgba(255,223,0,.1)",flexShrink:0}}>
-        <div style={{display:"flex",alignItems:"center",gap:8}}>
-          <div style={{width:30,height:30,borderRadius:"50%",background:"linear-gradient(135deg,#009C3B,#002776)",border:"2px solid #FFDF00",display:"flex",alignItems:"center",justifyContent:"center",fontSize:14}}>🏆</div>
-          <div>
-            <div style={{fontFamily:"'Bebas Neue',cursive",fontSize:16,letterSpacing:3,color:MGOLD,lineHeight:1}}>COPA SYLAS</div>
-            <div style={{fontSize:8,color:"rgba(255,255,255,.2)",letterSpacing:2}}>2026 · MIRACATU</div>
+    <aside className={`sidebar${isMobile&&isOpen?" open":""}`}
+      style={{width:W,position:isMobile?"fixed":"relative",top:0,left:0,bottom:0,zIndex:isMobile?150:"auto",
+        transform:isMobile?(isOpen?"translateX(0)":"translateX(-100%)"):"none",
+        transition:isMobile?"transform .25s":"width .25s cubic-bezier(.4,0,.2,1)"}}>
+
+      {/* Cabeçalho sidebar — só quando expandida */}
+      {(!collapsed||isMobile)&&(
+        <div style={{padding:"14px 12px 12px",borderBottom:"1px solid rgba(255,223,0,.1)",flexShrink:0}}>
+          <div style={{display:"flex",alignItems:"center",gap:8}}>
+            <div style={{width:28,height:28,borderRadius:"50%",background:"linear-gradient(135deg,#009C3B,#002776)",border:"2px solid #FFDF00",display:"flex",alignItems:"center",justifyContent:"center",fontSize:13,flexShrink:0}}>🏆</div>
+            <div>
+              <div style={{fontFamily:"'Bebas Neue',cursive",fontSize:15,letterSpacing:3,color:MGOLD,lineHeight:1}}>COPA SYLAS</div>
+              <div style={{fontSize:7,color:"rgba(255,255,255,.2)",letterSpacing:2}}>2026 · MIRACATU</div>
+            </div>
           </div>
         </div>
-      </div>
-      <nav style={{padding:"10px 7px",flex:1,overflowY:"auto"}}>
-        {items.map(item=>(
-          <button key={item.id} className={`slink${page===item.id?" active":""}`} onClick={()=>onNav(item.id)}>
-            <span style={{fontSize:16,flexShrink:0}}>{item.emoji}</span>
-            <span>{item.label}</span>
-          </button>
-        ))}
+      )}
+
+      {/* Links */}
+      <nav style={{padding:collapsed&&!isMobile?"10px 4px":"10px 7px",flex:1,overflowY:"auto"}}>
+        {items.map(item=>{
+          const mod=mods.find(m=>m.id===item.id);
+          const ac=mod?.accent||MGOLD;
+          const active=page===item.id;
+          return (
+            <div key={item.id} className="tip-host">
+              <button className={`slink${active?" active":""}`} onClick={()=>onNav(item.id)}
+                style={{justifyContent:collapsed&&!isMobile?"center":"flex-start",
+                  padding:collapsed&&!isMobile?"11px 0":"10px 11px",
+                  borderLeft:collapsed&&!isMobile?"none":(active?"3px solid #FFDF00":"3px solid transparent"),
+                  borderRadius:collapsed&&!isMobile?8:"0 6px 6px 0",
+                  boxShadow:collapsed&&!isMobile&&active?("0 0 0 2px "+MGOLD+"44"):"none"}}>
+                <span style={{fontSize:collapsed&&!isMobile?20:16,flexShrink:0,filter:active?("drop-shadow(0 0 5px "+ac+")"):"none"}}>{item.emoji}</span>
+                {(!collapsed||isMobile)&&<span>{item.label}</span>}
+              </button>
+              {collapsed&&!isMobile&&<div className="tip">{item.label}</div>}
+            </div>
+          );
+        })}
       </nav>
-      <div style={{padding:"11px 13px",borderTop:"1px solid rgba(255,223,0,.08)",flexShrink:0}}>
-        <div style={{fontSize:11,color:"rgba(255,255,255,.3)",marginBottom:6}}>
-          <span style={{color:MGOLD,fontWeight:700}}>{user?.name}</span>
-          <span style={{fontSize:9,marginLeft:5,color:"rgba(255,255,255,.2)"}}>{user?.role}</span>
+
+      {/* Rodapé */}
+      {(!collapsed||isMobile)&&(
+        <div style={{padding:"11px 13px",borderTop:"1px solid rgba(255,223,0,.08)",flexShrink:0}}>
+          <div style={{fontSize:11,color:"rgba(255,255,255,.3)",marginBottom:6}}>
+            <span style={{color:MGOLD,fontWeight:700}}>{user?.name}</span>
+            <span style={{fontSize:9,marginLeft:5,color:"rgba(255,255,255,.2)"}}>{user?.role}</span>
+          </div>
+          <button onClick={onLogout} style={{background:"rgba(255,255,255,.05)",border:"1px solid rgba(255,255,255,.1)",borderRadius:6,padding:"6px 12px",color:"rgba(255,255,255,.35)",fontSize:11,cursor:"pointer",fontFamily:"'Inter',sans-serif",width:"100%"}}>
+            Sair →
+          </button>
+          <div style={{textAlign:"center",marginTop:8,fontSize:11,letterSpacing:5,color:"rgba(255,223,0,.22)"}}>★ ★ ★ ★ ★</div>
         </div>
-        <button onClick={onLogout} style={{background:"rgba(255,255,255,.05)",border:"1px solid rgba(255,255,255,.1)",borderRadius:6,padding:"6px 12px",color:"rgba(255,255,255,.35)",fontSize:11,cursor:"pointer",fontFamily:"'Inter',sans-serif",width:"100%"}}>
-          Sair →
-        </button>
-        <div style={{textAlign:"center",marginTop:8,fontSize:11,letterSpacing:5,color:"rgba(255,223,0,.22)"}}>★ ★ ★ ★ ★</div>
-      </div>
+      )}
     </aside>
   );
 }
@@ -508,6 +535,7 @@ function App() {
   const [data,setData]=useState(()=>loadData()||INITIAL);
   const [toast,setToast]=useState(null);
   const [sideOpen,setSideOpen]=useState(false);
+  const [collapsed,setCollapsed]=useState(false);
   const [isMobile,setIsMobile]=useState(false);
 
   useEffect(()=>{
@@ -530,11 +558,11 @@ function App() {
   return (
     <div className="shell">
       <header style={{background:"rgba(3,7,0,.97)",backdropFilter:"blur(16px)",borderBottom:"3px solid #FFDF00",padding:"0 13px",display:"flex",alignItems:"center",gap:10,position:"sticky",top:0,zIndex:200,boxShadow:"0 4px 28px rgba(255,223,0,.1)",flexShrink:0}}>
-        {isMobile&&(
-          <button onClick={()=>setSideOpen(!sideOpen)} style={{background:"none",border:"1px solid rgba(255,223,0,.28)",borderRadius:6,padding:"6px 10px",color:MGOLD,fontSize:17,cursor:"pointer",flexShrink:0}}>
-            {sideOpen?"✕":"☰"}
-          </button>
-        )}
+        <button onClick={()=>isMobile?setSideOpen(!sideOpen):setCollapsed(!collapsed)}
+          style={{background:"none",border:"1px solid rgba(255,223,0,.25)",borderRadius:6,padding:"6px 10px",color:MGOLD,fontSize:16,cursor:"pointer",flexShrink:0,transition:"all .2s"}}
+          title={isMobile?(sideOpen?"Fechar":"Menu"):(collapsed?"Expandir menu":"Recolher menu")}>
+          {isMobile?(sideOpen?"✕":"☰"):(collapsed?"▶":"◀")}
+        </button>
         <div style={{display:"flex",alignItems:"center",gap:8,flex:isMobile?1:"auto"}}>
           <div style={{width:32,height:32,borderRadius:"50%",background:"linear-gradient(135deg,#009C3B,#002776)",border:"2px solid #FFDF00",display:"flex",alignItems:"center",justifyContent:"center",fontSize:15,flexShrink:0}}>🏆</div>
           <div>
@@ -558,11 +586,13 @@ function App() {
       </header>
       <div className="body-wrap">
         {isMobile&&sideOpen&&<div onClick={()=>setSideOpen(false)} style={{position:"fixed",inset:0,background:"rgba(0,0,0,.65)",zIndex:140}}/>}
-        <Sidebar mods={data.mods} page={page} onNav={navTo} isOpen={sideOpen} isMobile={isMobile} user={user} onLogout={()=>setUser(null)}/>
+        <Sidebar mods={data.mods} page={page} onNav={navTo} isOpen={sideOpen} isMobile={isMobile} user={user} onLogout={()=>setUser(null)} collapsed={collapsed}/>
         <main className="main-scroll">
-          {page==="home"&&<Home mods={data.mods} onNav={navTo} isMobile={isMobile}/>}
-          {page==="admin"&&isAdmin&&<Admin data={data} setData={d=>{setData(d);saveData(d);}}/>}
-          {curMod&&<ModalityPage key={page} mod={curMod} onChange={handleChange} canEdit={canEdit} isMobile={isMobile}/>}
+          <div className="main-inner">
+            {page==="home"&&<Home mods={data.mods} onNav={navTo} isMobile={isMobile}/>}
+            {page==="admin"&&isAdmin&&<Admin data={data} setData={d=>{setData(d);saveData(d);}}/>}
+            {curMod&&<ModalityPage key={page} mod={curMod} onChange={handleChange} canEdit={canEdit} isMobile={isMobile}/>}
+          </div>
         </main>
       </div>
       {toast&&<div style={{position:"fixed",bottom:20,left:"50%",transform:"translateX(-50%)",background:"linear-gradient(135deg,#009C3B,#006622)",color:"#fff",borderRadius:8,padding:"10px 22px",fontSize:13,fontWeight:700,boxShadow:"0 4px 20px rgba(0,0,0,.5)",zIndex:999,border:"1px solid rgba(255,223,0,.25)",whiteSpace:"nowrap"}}>✓ {toast}</div>}
