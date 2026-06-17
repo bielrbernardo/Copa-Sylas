@@ -2,18 +2,18 @@ const { useState, useEffect } = React;
 
 // ─── CREDENCIAIS ──────────────────────────────────────────────────────────────
 const USERS = [
-  { user:"admin",   pass:"gabriel", role:"admin",  name:"Administrador" },
-  { user:"editor", pass:"sylas",      role:"editor", name:"Editor" },
+  { user:"admin",  pass:"gabriel", role:"admin",  name:"Administrador" },
+  { user:"editor", pass:"sylas",   role:"editor", name:"Editor" },
 ];
 
 // ─── CONSTANTES ───────────────────────────────────────────────────────────────
-// Códigos ISO das bandeiras — imagens reais via flagcdn.com
+// Bandeiras via SVG inline do flagicons.lipis.org (sem CORS, sem bloqueio)
 const FLAGS = [
-  {code:"br",br:true},{code:"ar"},{code:"fr"},{code:"de"},{code:"pt"},
-  {code:"it"},{code:"es"},{code:"uy"},{code:"jp"},{code:"kr"},
-  {code:"nl"},{code:"be"},{code:"cr"},{code:"mx"},{code:"gh"},
-  {code:"sn"},{code:"au"},{code:"ch"},{code:"pl"},{code:"us"},
-  {code:"hr"},{code:"br",br:true},{code:"br",br:true},
+  {code:"BR",br:true},{code:"AR"},{code:"FR"},{code:"DE"},{code:"PT"},
+  {code:"IT"},{code:"ES"},{code:"UY"},{code:"JP"},{code:"KR"},
+  {code:"NL"},{code:"BE"},{code:"CR"},{code:"MX"},{code:"GH"},
+  {code:"SN"},{code:"AU"},{code:"CH"},{code:"PL"},{code:"US"},
+  {code:"HR"},{code:"BR",br:true},{code:"BR",br:true},
 ];
 const MGOLD  = "#FFDF00";
 const MGREEN = "#009C3B";
@@ -134,16 +134,17 @@ function FlagStrip({ rev, speed=20, h=44 }) {
       <div style={{display:"flex",alignItems:"center",animation:`${rev?"flagScroll2":"flagScroll"} ${speed}s linear infinite`,width:"max-content"}}>
         {all.map((f,i)=>(
           <img key={i}
-            src={"https://flagcdn.com/"+( f.br?"48x36":"32x24")+"/"+f.code+".png"}
+            src={"https://flagsapi.com/"+f.code+"/flat/64.png"}
             alt={f.code}
+            onError={e=>{ e.target.src="https://flagcdn.com/w40/"+f.code.toLowerCase()+".png"; }}
             style={{
-              height: f.br ? h*.75 : h*.52,
+              height: f.br ? h*.82 : h*.56,
               width:"auto",
-              margin:"0 "+( h*.1)+"px",
-              borderRadius:2,
+              margin:"0 "+(h*.12)+"px",
+              borderRadius:3,
               filter: f.br
-                ? "drop-shadow(0 0 6px rgba(0,156,59,.9)) drop-shadow(0 0 10px rgba(255,223,0,.4))"
-                : "grayscale(30%) opacity(55%)",
+                ? "drop-shadow(0 0 8px rgba(0,156,59,.9)) drop-shadow(0 0 12px rgba(255,223,0,.5))"
+                : "grayscale(25%) opacity(60%)",
               flexShrink:0,
             }}
           />
