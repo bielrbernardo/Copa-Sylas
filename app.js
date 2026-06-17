@@ -7,7 +7,14 @@ const USERS = [
 ];
 
 // ─── CONSTANTES ───────────────────────────────────────────────────────────────
-const FLAGS = ["🇧🇷","🇦🇷","🇫🇷","🇩🇪","🇵🇹","🇮🇹","🇪🇸","🇺🇾","🇯🇵","🇰🇷","🇳🇱","🇧🇪","🇨🇷","🇲🇽","🇬🇭","🇸🇳","🇦🇺","🇨🇭","🇵🇱","🇺🇸","🇭🇷","🇧🇷","🇧🇷"];
+// Códigos ISO das bandeiras — imagens reais via flagcdn.com
+const FLAGS = [
+  {code:"br",br:true},{code:"ar"},{code:"fr"},{code:"de"},{code:"pt"},
+  {code:"it"},{code:"es"},{code:"uy"},{code:"jp"},{code:"kr"},
+  {code:"nl"},{code:"be"},{code:"cr"},{code:"mx"},{code:"gh"},
+  {code:"sn"},{code:"au"},{code:"ch"},{code:"pl"},{code:"us"},
+  {code:"hr"},{code:"br",br:true},{code:"br",br:true},
+];
 const MGOLD  = "#FFDF00";
 const MGREEN = "#009C3B";
 const M_COLOR = "#1565C0";
@@ -121,15 +128,25 @@ function DecoSVG({ id, gc }) {
 
 // ─── FLAG STRIP ───────────────────────────────────────────────────────────────
 function FlagStrip({ rev, speed=20, h=44 }) {
-  const all=[...FLAGS,...FLAGS];
+  const all=[...FLAGS,...FLAGS,...FLAGS,...FLAGS];
   return (
     <div style={{overflow:"hidden",height:h,flexShrink:0}}>
-      <div style={{display:"flex",animation:`${rev?"flagScroll2":"flagScroll"} ${speed}s linear infinite`,width:"max-content"}}>
-        {[...all,...all].map((f,i)=>(
-          <span key={i} style={{fontSize:f==="🇧🇷"?h*.64:h*.43,padding:`${h*.1}px ${h*.17}px`,lineHeight:1,
-            filter:f!=="🇧🇷"?"grayscale(40%) opacity(50%)":"drop-shadow(0 0 6px rgba(0,156,59,.9))"}}>
-            {f}
-          </span>
+      <div style={{display:"flex",alignItems:"center",animation:`${rev?"flagScroll2":"flagScroll"} ${speed}s linear infinite`,width:"max-content"}}>
+        {all.map((f,i)=>(
+          <img key={i}
+            src={"https://flagcdn.com/"+( f.br?"48x36":"32x24")+"/"+f.code+".png"}
+            alt={f.code}
+            style={{
+              height: f.br ? h*.75 : h*.52,
+              width:"auto",
+              margin:"0 "+( h*.1)+"px",
+              borderRadius:2,
+              filter: f.br
+                ? "drop-shadow(0 0 6px rgba(0,156,59,.9)) drop-shadow(0 0 10px rgba(255,223,0,.4))"
+                : "grayscale(30%) opacity(55%)",
+              flexShrink:0,
+            }}
+          />
         ))}
       </div>
     </div>
