@@ -126,6 +126,17 @@ function DecoSVG({ id, gc }) {
   return null;
 }
 
+// ─── BANDEIRA BR (imagem real, sem emoji) ─────────────────────────────────────
+function BRFlag({ size=24, style={} }) {
+  return (
+    <img
+      src="https://flagsapi.com/BR/flat/64.png"
+      alt="Brasil"
+      onError={e=>{ e.target.src="https://flagcdn.com/w40/br.png"; }}
+      style={{height:size,width:"auto",borderRadius:2,...style}}
+    />
+  );
+}
 // ─── FLAG STRIP ───────────────────────────────────────────────────────────────
 function FlagStrip({ rev, speed=20, h=44 }) {
   const all=[...FLAGS,...FLAGS,...FLAGS,...FLAGS];
@@ -187,7 +198,7 @@ function Login({ onLogin }) {
             ENTRAR →
           </button>
         </div>
-        <div style={{textAlign:"center",marginTop:16,color:"rgba(255,255,255,.12)",fontSize:10,letterSpacing:2}}>🇧🇷 E.E. Sylas Baltazar de Araújo · Miracatu</div>
+        <div style={{textAlign:"center",marginTop:16,color:"rgba(255,255,255,.12)",fontSize:10,letterSpacing:2}}><BRFlag size={14} style={{marginRight:4,verticalAlign:"middle"}}/> E.E. Sylas Baltazar de Araújo · Miracatu</div>
       </div>
       <div style={{position:"absolute",bottom:0,left:0,right:0}}><FlagStrip rev speed={30} h={36}/></div>
     </div>
@@ -274,7 +285,7 @@ function Home({ mods, onNav, isMobile }) {
         <div style={{position:"absolute",bottom:0,left:0,right:0}}><FlagStrip rev speed={24} h={isMobile?34:50}/></div>
         <div style={{position:"relative",zIndex:3,textAlign:"center",padding:isMobile?"60px 16px":"90px 24px"}}>
           <div className="fu1" style={{fontSize:11,letterSpacing:7,color:MGOLD,marginBottom:5}}>★ ★ ★ ★ ★</div>
-          <div style={{fontSize:isMobile?64:86,lineHeight:1,marginBottom:4,animation:"floatUp 3s ease-in-out infinite",filter:"drop-shadow(0 0 25px rgba(0,156,59,.9)) drop-shadow(0 0 50px rgba(255,223,0,.4))"}}>🇧🇷</div>
+          <div style={{fontSize:isMobile?64:86,lineHeight:1,marginBottom:4,animation:"floatUp 3s ease-in-out infinite",filter:"drop-shadow(0 0 25px rgba(0,156,59,.9)) drop-shadow(0 0 50px rgba(255,223,0,.4))"}}>  <BRFlag size={isMobile?64:86}/></div>
           <div className="fu2" style={{fontFamily:"'Bebas Neue',cursive",fontSize:"clamp(58px,11vw,120px)",letterSpacing:6,lineHeight:.88,background:"linear-gradient(180deg,#FFDF00,#FFB800,#cc8800,#FFDF00)",WebkitBackgroundClip:"text",WebkitTextFillColor:"transparent",filter:"drop-shadow(0 4px 16px rgba(255,180,0,.4))"}}>
             COPA<br/>SYLAS
           </div>
@@ -312,7 +323,7 @@ function Home({ mods, onNav, isMobile }) {
       <div style={{background:"linear-gradient(135deg,#001a0a,#002776,#001a0a)",padding:isMobile?"26px 16px":"36px 24px",textAlign:"center",position:"relative",overflow:"hidden"}}>
         <div style={{position:"absolute",inset:0,background:"radial-gradient(ellipse 60% 80% at 50% 50%,rgba(0,156,59,.1),transparent)",pointerEvents:"none"}}/>
         <div style={{position:"relative",zIndex:1,display:"flex",alignItems:"center",justifyContent:"center",gap:20,flexWrap:"wrap"}}>
-          <div style={{fontSize:isMobile?46:60,animation:"floatUp 3s ease-in-out infinite",filter:"drop-shadow(0 0 18px rgba(0,156,59,.8))"}}>🇧🇷</div>
+          <div style={{fontSize:isMobile?46:60,animation:"floatUp 3s ease-in-out infinite",filter:"drop-shadow(0 0 18px rgba(0,156,59,.8))"}}>  <BRFlag size={isMobile?46:60}/></div>
           <div>
             <div style={{fontFamily:"'Bebas Neue',cursive",fontSize:isMobile?22:28,letterSpacing:5,color:MGOLD}}>ORGULHO DO BRASIL</div>
             <div style={{color:"rgba(255,255,255,.3)",fontSize:11,letterSpacing:3,marginTop:4}}>★ ★ ★ ★ ★ · PENTACAMPEÕES</div>
@@ -372,7 +383,7 @@ function Bracket({ rounds, gc, canEdit, onWin, onEdit, onAddMatch, onRename, onA
           <div style={{display:"flex",flexDirection:"column",alignItems:"center",paddingTop:24,gap:8}}>
             <div style={{fontSize:9,fontWeight:800,letterSpacing:3,color:MGOLD}}>★ CAMPEÃO ★</div>
             <div style={{background:"linear-gradient(135deg,#FFDF00,#FFB800,#cc8800)",color:"#0a0f00",borderRadius:10,padding:"13px 20px",fontWeight:900,fontSize:14,boxShadow:"0 0 28px rgba(255,223,0,.45)",border:"2px solid rgba(255,255,255,.25)",whiteSpace:"nowrap"}}>
-              🏆 {champ} 🇧🇷
+              🏆 {champ} 
             </div>
             <div style={{fontSize:12,color:"rgba(255,223,0,.35)"}}>★ ★ ★ ★ ★</div>
           </div>
@@ -463,7 +474,7 @@ function ModalityPage({ mod, onChange, canEdit, isMobile }) {
           <ellipse cx="140" cy="60" rx="310" ry="50" fill={gc} transform="rotate(-10,140,60)"/>
           <ellipse cx="700" cy="65" rx="220" ry="40" fill="#FFDF00" transform="rotate(8,700,65)"/>
         </svg>
-        <div style={{position:"absolute",right:14,top:"50%",transform:"translateY(-50%)",fontSize:isMobile?48:76,opacity:.05}}>🇧🇷</div>
+        <div style={{position:"absolute",right:14,top:"50%",transform:"translateY(-50%)",fontSize:isMobile?48:76,opacity:.05}}><BRFlag size={isMobile?48:76}/></div>
         <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",flexWrap:"wrap",gap:10,position:"relative",zIndex:1}}>
           <div style={{display:"flex",alignItems:"center",gap:12}}>
             <span style={{fontSize:isMobile?34:42,filter:`drop-shadow(0 0 12px ${gc})`}}>{mod.emoji}</span>
@@ -474,7 +485,7 @@ function ModalityPage({ mod, onChange, canEdit, isMobile }) {
           </div>
           <div style={{display:"flex",alignItems:"center",gap:8}}>
             <span style={{fontSize:9,color:MGOLD,letterSpacing:3}}>★ ★ ★ ★ ★</span>
-            <span style={{fontSize:20}}>🇧🇷</span>
+            <BRFlag size={20}/>
             {canEdit&&<button onClick={()=>setShowBulk(true)} style={{background:gc,color:"#0a0f00",border:"none",borderRadius:6,padding:"6px 12px",fontWeight:700,fontSize:11,cursor:"pointer",fontFamily:"'Inter',sans-serif"}}>+ Jogadores</button>}
           </div>
         </div>
@@ -580,7 +591,7 @@ function App() {
           </div>
         )}
         <div style={{display:"flex",alignItems:"center",gap:8,flexShrink:0,marginLeft:isMobile?0:8}}>
-          <span style={{fontSize:isMobile?17:20,animation:"floatUp 2.5s ease-in-out infinite"}}>🇧🇷</span>
+          <BRFlag size={isMobile?17:20} style={{animation:"floatUp 2.5s ease-in-out infinite",borderRadius:2}}/>
           {!isMobile&&<div style={{fontSize:10,color:"rgba(255,255,255,.22)",textAlign:"right"}}><div style={{color:MGOLD,fontWeight:700,fontSize:11}}>{user.name}</div><div style={{cursor:"pointer"}} onClick={()=>setUser(null)}>Sair</div></div>}
         </div>
       </header>
@@ -598,7 +609,7 @@ function App() {
       {toast&&<div style={{position:"fixed",bottom:20,left:"50%",transform:"translateX(-50%)",background:"linear-gradient(135deg,#009C3B,#006622)",color:"#fff",borderRadius:8,padding:"10px 22px",fontSize:13,fontWeight:700,boxShadow:"0 4px 20px rgba(0,0,0,.5)",zIndex:999,border:"1px solid rgba(255,223,0,.25)",whiteSpace:"nowrap"}}>✓ {toast}</div>}
       <footer style={{background:"linear-gradient(135deg,#002776,#001a0a,#002776)",borderTop:"3px solid #FFDF00",padding:"14px 20px",textAlign:"center",flexShrink:0}}>
         <div style={{display:"flex",alignItems:"center",justifyContent:"center",gap:12,flexWrap:"wrap"}}>
-          <span style={{fontSize:17}}>🇧🇷</span>
+          <BRFlag size={17}/>
           <div><div style={{fontFamily:"'Bebas Neue',cursive",fontSize:15,letterSpacing:4,color:MGOLD}}>COPA SYLAS 2026</div><div style={{fontSize:9,color:"rgba(255,255,255,.18)",letterSpacing:2}}>E.E. SYLAS BALTAZAR DE ARAÚJO · MIRACATU – SP</div></div>
           <span style={{fontSize:17}}>🏆</span>
         </div>
