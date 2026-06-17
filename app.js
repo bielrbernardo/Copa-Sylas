@@ -139,10 +139,17 @@ function BRFlag({ size=24, style={} }) {
 }
 // ─── FLAG STRIP ───────────────────────────────────────────────────────────────
 function FlagStrip({ rev, speed=20, h=44 }) {
-  const all=[...FLAGS,...FLAGS,...FLAGS,...FLAGS];
+  // Faixa reversa tem ordem embaralhada para parecer diferente da de cima
+  const fwd=[...FLAGS,...FLAGS,...FLAGS,...FLAGS];
+  const bwd=[...FLAGS].reverse().concat([...FLAGS].reverse()).concat([...FLAGS].reverse()).concat([...FLAGS].reverse());
+  const all = rev ? bwd : fwd;
   return (
     <div style={{overflow:"hidden",height:h,flexShrink:0}}>
-      <div style={{display:"flex",alignItems:"center",animation:`${rev?"flagScroll2":"flagScroll"} ${speed}s linear infinite`,width:"max-content"}}>
+      <div style={{display:"flex",alignItems:"center",
+        animation:`${rev?"flagScroll2":"flagScroll"} ${speed}s linear infinite`,
+        width:"max-content",
+        willChange:"transform",
+      }}>
         {all.map((f,i)=>(
           <img key={i}
             src={"https://flagsapi.com/"+f.code+"/flat/64.png"}
