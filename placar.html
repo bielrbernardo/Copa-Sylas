@@ -1,0 +1,459 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Copa Sylas 2026 · Placar Ao Vivo</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🏆</text></svg>"/>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;600;700;800;900&display=swap" rel="stylesheet"/>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+html,body{height:100%;background:#0a0f00;color:#e2e8f0;font-family:'Inter',sans-serif;}
+::-webkit-scrollbar{width:5px;height:5px;}
+::-webkit-scrollbar-track{background:#0a0f00;}
+::-webkit-scrollbar-thumb{background:#FFDF0030;border-radius:3px;}
+@keyframes flagScroll{from{transform:translateX(0)}to{transform:translateX(-50%)}}
+@keyframes flagScroll2{from{transform:translateX(-50%)}to{transform:translateX(0)}}
+@keyframes floatUp{0%,100%{transform:translateY(0)}50%{transform:translateY(-7px)}}
+@keyframes fadeIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+@keyframes spin{from{transform:rotate(0)}to{transform:rotate(360deg)}}
+.flag-strip{overflow:hidden;flex-shrink:0;}
+.flag-inner{display:flex;align-items:center;width:max-content;}
+.flag-fwd{animation:flagScroll 22s linear infinite;}
+.flag-rev{animation:flagScroll2 26s linear infinite;}
+.tab-btn{background:transparent;border:1px solid rgba(255,255,255,.1);border-radius:6px;padding:8px 16px;color:rgba(255,255,255,.4);font-size:11px;font-weight:600;cursor:pointer;font-family:'Inter',sans-serif;letter-spacing:1px;white-space:nowrap;transition:all .2s;}
+.tab-btn.active{background:rgba(255,223,0,.15);border-color:rgba(255,223,0,.4);color:#FFDF00;font-weight:800;}
+.tab-btn:hover{background:rgba(255,223,0,.08);color:#FFDF00;}
+.match-row{display:flex;align-items:center;padding:9px 12px;border-bottom:1px solid rgba(255,255,255,.05);font-size:13px;transition:background .12s;}
+.match-row:last-child{border-bottom:none;}
+.badge-em-breve{display:inline-flex;align-items:center;gap:6px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);border-radius:8px;padding:8px 14px;font-size:11px;color:rgba(255,255,255,.3);letter-spacing:2px;}
+.progress-bar{height:6px;background:rgba(255,255,255,.08);border-radius:4px;overflow:hidden;}
+.progress-fill{height:100%;border-radius:4px;transition:width 1s ease;}
+</style>
+</head>
+<body>
+<div id="app" style="min-height:100vh;display:flex;flex-direction:column;"></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.2/babel.min.js"></script>
+<script type="text/babel">
+const { useState, useEffect, useRef } = React;
+
+const MGOLD = "#FFDF00";
+const MGREEN = "#009C3B";
+const FLAG_CODES = ["BR","AR","FR","DE","PT","IT","ES","UY","JP","KR","NL","BE","CR","MX","GH","SN","AU","CH","PL","US","HR","BR","BR"];
+const MODS_META = [
+  {id:"tenis",    name:"Tênis de Mesa", emoji:"🏓", accent:"#e91e8c"},
+  {id:"dama",     name:"Dama",          emoji:"♟️", accent:"#7c3aed"},
+  {id:"queimada", name:"Queimada",      emoji:"🔥", accent:"#ea580c"},
+  {id:"volei",    name:"Vôlei",         emoji:"🏐", accent:"#0ea5e9"},
+  {id:"futsal",   name:"Futsal",        emoji:"⚽", accent:"#009C3B"},
+];
+
+// Lê dados do localStorage (mesma chave do app principal)
+function getData() {
+  try { const s = localStorage.getItem("copa26_v5"); return s ? JSON.parse(s) : null; } catch(e) { return null; }
+}
+
+function BRFlag({ size=22 }) {
+  return <img src="https://flagsapi.com/BR/flat/64.png" alt="BR"
+    onError={e=>e.target.src="https://flagcdn.com/w40/br.png"}
+    style={{height:size,width:"auto",borderRadius:2}}/>;
+}
+
+function FlagStrip({ rev, h=40 }) {
+  const all = [...FLAG_CODES,...FLAG_CODES,...FLAG_CODES,...FLAG_CODES];
+  return (
+    <div className="flag-strip" style={{height:h}}>
+      <div className={`flag-inner ${rev?"flag-rev":"flag-fwd"}`}>
+        {all.map((c,i)=>(
+          <img key={i} src={`https://flagsapi.com/${c}/flat/64.png`} alt={c}
+            onError={e=>e.target.src=`https://flagcdn.com/w40/${c.toLowerCase()}.png`}
+            style={{height:c==="BR"?h*.78:h*.54,width:"auto",margin:"0 9px",borderRadius:2,
+              filter:c==="BR"?"drop-shadow(0 0 6px rgba(0,156,59,.9))":"grayscale(30%) opacity(55%)"}}/>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function MatchCard({ match, gc }) {
+  return (
+    <div style={{background:"rgba(255,255,255,.04)",border:`1px solid ${match.winner?"rgba(255,223,0,.2)":"rgba(255,255,255,.07)"}`,borderRadius:7,overflow:"hidden",marginBottom:6,boxShadow:match.winner?"0 0 10px rgba(255,223,0,.07)":"none"}}>
+      {[match.p1,match.p2].map((n,pi)=>(
+        <div key={pi} className="match-row"
+          style={{background:match.winner===n?`${gc}28`:"transparent",color:match.winner===n?gc:n?"#e2e8f0":"rgba(255,255,255,.2)",fontWeight:match.winner===n?800:400}}>
+          {match.winner===n&&<span style={{fontSize:10,marginRight:5}}>✓</span>}
+          <span>{n||"—"}</span>
+          {n==="BYE"&&<span style={{fontSize:9,color:"#64748b",marginLeft:"auto"}}>bye</span>}
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function BracketView({ rounds, gc }) {
+  const champ = rounds[rounds.length-1]?.matches[0]?.winner;
+  return (
+    <div style={{overflowX:"auto",paddingBottom:12}}>
+      <div style={{display:"flex",gap:16,minWidth:"max-content",alignItems:"flex-start"}}>
+        {rounds.map((r,ri)=>(
+          <div key={ri} style={{minWidth:180}}>
+            <div style={{fontSize:9,fontWeight:800,letterSpacing:2,textTransform:"uppercase",color:gc,padding:"3px 8px",background:`${gc}14`,borderRadius:4,marginBottom:8,display:"inline-block"}}>{r.name}</div>
+            {r.matches.map((m,mi)=><MatchCard key={mi} match={m} gc={gc}/>)}
+          </div>
+        ))}
+        {champ&&(
+          <div style={{paddingTop:22,display:"flex",flexDirection:"column",alignItems:"center",gap:6}}>
+            <div style={{fontSize:9,fontWeight:800,letterSpacing:3,color:MGOLD}}>★ CAMPEÃO ★</div>
+            <div style={{background:"linear-gradient(135deg,#FFDF00,#FFB800)",color:"#0a0f00",borderRadius:8,padding:"11px 18px",fontWeight:900,fontSize:14,whiteSpace:"nowrap",boxShadow:"0 0 24px rgba(255,223,0,.4)"}}>
+              🏆 {champ}
+            </div>
+            <div style={{fontSize:12,color:"rgba(255,223,0,.35)"}}>★ ★ ★ ★ ★</div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function AoVivoTab({ mods }) {
+  const [modIdx, setModIdx] = useState(0);
+  const ativas = mods.filter(m=>m.ativo);
+
+  useEffect(()=>{
+    if(ativas.length===0) return;
+    const t = setInterval(()=>setModIdx(x=>(x+1)%ativas.length), 5000);
+    return ()=>clearInterval(t);
+  },[ativas.length]);
+
+  if(ativas.length===0) return (
+    <div style={{textAlign:"center",padding:"60px 20px"}}>
+      <div style={{fontSize:48,marginBottom:16,opacity:.3}}>🔒</div>
+      <div style={{color:"rgba(255,255,255,.3)",fontSize:14,letterSpacing:2}}>Nenhuma modalidade iniciada ainda</div>
+      <div style={{color:"rgba(255,255,255,.15)",fontSize:11,marginTop:8}}>Aguarde o início das competições</div>
+    </div>
+  );
+
+  const mod = ativas[modIdx % ativas.length];
+  const meta = MODS_META.find(m=>m.id===mod.id)||{accent:"#FFDF00",emoji:"🏅"};
+
+  // Classificados recentes
+  const getClassificados = (rounds) => {
+    const res = [];
+    rounds.forEach((r,ri)=>r.matches.forEach(m=>{
+      if(m.winner) res.push({fase:r.name,nome:m.winner,isFinal:ri===rounds.length-1});
+    }));
+    return res;
+  };
+
+  return (
+    <div>
+      {/* Destaque modalidade atual */}
+      <div style={{position:"relative",overflow:"hidden",background:`linear-gradient(135deg,${meta.accent}18,#0a0f00)`,borderBottom:`3px solid ${meta.accent}44`,padding:"28px 32px 24px",animation:"fadeIn .4s ease"}}>
+        <svg style={{position:"absolute",inset:0,width:"100%",height:"100%",opacity:.06,pointerEvents:"none"}} viewBox="0 0 800 200" preserveAspectRatio="xMidYMid slice">
+          <ellipse cx="200" cy="100" rx="400" ry="80" fill={meta.accent} transform="rotate(-10,200,100)"/>
+          <ellipse cx="700" cy="120" rx="300" ry="60" fill="#FFDF00" transform="rotate(5,700,120)"/>
+        </svg>
+
+        <div style={{display:"flex",alignItems:"center",gap:14,marginBottom:20,position:"relative",zIndex:1}}>
+          <span style={{fontSize:44,filter:`drop-shadow(0 0 14px ${meta.accent})`}}>{meta.emoji}</span>
+          <div style={{flex:1}}>
+            <div style={{fontFamily:"'Bebas Neue',cursive",fontSize:30,color:meta.accent,letterSpacing:4,lineHeight:1}}>{mod.name}</div>
+            <div style={{color:"rgba(255,255,255,.28)",fontSize:9,letterSpacing:3,marginTop:2}}>EM ANDAMENTO · COPA SYLAS 2026</div>
+          </div>
+          {/* Dots navegação */}
+          <div style={{display:"flex",gap:5}}>
+            {ativas.map((m,i)=>{
+              const mt = MODS_META.find(x=>x.id===m.id)||{accent:"#FFDF00"};
+              return <div key={i} onClick={()=>setModIdx(i)} style={{width:i===modIdx%ativas.length?22:7,height:7,borderRadius:4,background:i===modIdx%ativas.length?mt.accent:"rgba(255,255,255,.2)",transition:"all .3s",cursor:"pointer"}}/>;
+            })}
+          </div>
+          <div style={{animation:"floatUp 2.5s ease-in-out infinite"}}><BRFlag size={28}/></div>
+        </div>
+
+        {/* Cards masculino/feminino */}
+        <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:16,position:"relative",zIndex:1}}>
+          {["masculino","feminino"].map(g=>{
+            const gData = mod.genders[g];
+            const gc = g==="masculino"?"#1565C0":"#e91e8c";
+            const classificados = getClassificados(gData.rounds);
+            const campeao = gData.rounds[gData.rounds.length-1]?.matches[0]?.winner;
+            return (
+              <div key={g} style={{background:"rgba(0,0,0,.45)",border:`1px solid ${gc}44`,borderRadius:10,padding:16,backdropFilter:"blur(8px)"}}>
+                <div style={{display:"flex",alignItems:"center",gap:7,marginBottom:12}}>
+                  <div style={{width:26,height:26,borderRadius:6,background:gc,display:"flex",alignItems:"center",justifyContent:"center",fontSize:13,fontWeight:900,color:"#fff"}}>{g==="masculino"?"♂":"♀"}</div>
+                  <span style={{color:g==="masculino"?"#64b5f6":"#f48fb1",fontWeight:700,fontSize:11,letterSpacing:2,textTransform:"uppercase"}}>{g==="masculino"?"Masculino":"Feminino"}</span>
+                </div>
+
+                {campeao ? (
+                  <div style={{display:"flex",alignItems:"center",gap:8,padding:"11px 12px",background:"linear-gradient(135deg,rgba(255,223,0,.15),rgba(255,180,0,.08))",border:"1px solid rgba(255,223,0,.35)",borderRadius:8}}>
+                    <span style={{fontSize:20}}>🏆</span>
+                    <div>
+                      <div style={{fontWeight:900,fontSize:14,color:MGOLD}}>{campeao}</div>
+                      <div style={{fontSize:9,color:"rgba(255,223,0,.5)",letterSpacing:2}}>CAMPEÃO</div>
+                    </div>
+                  </div>
+                ) : classificados.length===0 ? (
+                  <div style={{color:"rgba(255,255,255,.2)",fontSize:12,textAlign:"center",padding:"14px 0"}}>Aguardando resultados...</div>
+                ) : (
+                  <div>
+                    {classificados.slice(-4).map((c,i)=>(
+                      <div key={i} style={{display:"flex",alignItems:"center",gap:7,padding:"7px 10px",background:"rgba(255,255,255,.04)",borderRadius:6,marginBottom:4,animation:"fadeIn .4s ease"}}>
+                        <span style={{fontSize:13}}>✅</span>
+                        <span style={{flex:1,fontWeight:700,fontSize:13}}>{c.nome}</span>
+                        <span style={{fontSize:9,color:"rgba(255,255,255,.3)",background:"rgba(255,255,255,.06)",padding:"2px 6px",borderRadius:4}}>{c.fase}</span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* Resumo geral todas as modalidades ativas */}
+      <div style={{padding:"24px 32px"}}>
+        <div style={{fontSize:10,color:"rgba(255,255,255,.3)",letterSpacing:3,textTransform:"uppercase",marginBottom:14}}>📊 Progresso Geral</div>
+        <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(200px,1fr))",gap:10}}>
+          {mods.map(m=>{
+            const meta = MODS_META.find(x=>x.id===m.id)||{accent:"#FFDF00",emoji:"🏅"};
+            if(!m.ativo) return (
+              <div key={m.id} style={{background:"rgba(255,255,255,.02)",border:"1px solid rgba(255,255,255,.06)",borderRadius:8,padding:"12px 14px",opacity:.5}}>
+                <div style={{display:"flex",alignItems:"center",gap:7,marginBottom:6}}>
+                  <span style={{fontSize:18,filter:"grayscale(1)"}}>{meta.emoji}</span>
+                  <span style={{fontSize:11,color:"rgba(255,255,255,.3)",textTransform:"uppercase",letterSpacing:1}}>{m.name}</span>
+                </div>
+                <div className="badge-em-breve"><span>🔒</span> EM BREVE</div>
+              </div>
+            );
+            const allMatches = [...m.genders.masculino.rounds,...m.genders.feminino.rounds].flatMap(r=>r.matches);
+            const done = allMatches.filter(x=>x.winner).length;
+            const total = allMatches.length;
+            const pct = total>0?Math.round(done/total*100):0;
+            return (
+              <div key={m.id} style={{background:"rgba(255,255,255,.03)",border:`1px solid ${meta.accent}33`,borderRadius:8,padding:"12px 14px"}}>
+                <div style={{display:"flex",alignItems:"center",gap:7,marginBottom:8}}>
+                  <span style={{fontSize:18}}>{meta.emoji}</span>
+                  <span style={{fontSize:11,fontWeight:700,color:meta.accent,textTransform:"uppercase",letterSpacing:1}}>{m.name}</span>
+                  <span style={{marginLeft:"auto",fontSize:10,fontWeight:700,color:meta.accent}}>{pct}%</span>
+                </div>
+                <div className="progress-bar">
+                  <div className="progress-fill" style={{width:`${pct}%`,background:`linear-gradient(90deg,${meta.accent},${meta.accent}88)`}}/>
+                </div>
+                <div style={{fontSize:10,color:"rgba(255,255,255,.25)",marginTop:5}}>{done} de {total} jogos concluídos</div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function ChaveamentoTab({ mods }) {
+  const ativas = mods.filter(m=>m.ativo);
+  return (
+    <div style={{padding:"24px 32px"}}>
+      {mods.map(mod=>{
+        const meta = MODS_META.find(m=>m.id===mod.id)||{accent:"#FFDF00",emoji:"🏅"};
+        if(!mod.ativo) return (
+          <div key={mod.id} style={{marginBottom:24,background:"rgba(255,255,255,.02)",border:"1px solid rgba(255,255,255,.07)",borderRadius:10,padding:"20px 24px",opacity:.5}}>
+            <div style={{display:"flex",alignItems:"center",gap:10}}>
+              <span style={{fontSize:28,filter:"grayscale(1)"}}>{meta.emoji}</span>
+              <span style={{fontFamily:"'Bebas Neue',cursive",fontSize:22,color:"rgba(255,255,255,.3)",letterSpacing:3}}>{mod.name}</span>
+              <div className="badge-em-breve" style={{marginLeft:"auto"}}><span>🔒</span> EM BREVE</div>
+            </div>
+          </div>
+        );
+        return (
+          <div key={mod.id} style={{marginBottom:32,animation:"fadeIn .5s ease"}}>
+            <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:16,paddingBottom:8,borderBottom:`2px solid ${meta.accent}44`}}>
+              <span style={{fontSize:28}}>{meta.emoji}</span>
+              <span style={{fontFamily:"'Bebas Neue',cursive",fontSize:24,color:meta.accent,letterSpacing:3}}>{mod.name}</span>
+            </div>
+            <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:20}}>
+              {["masculino","feminino"].map(g=>{
+                const gc = g==="masculino"?"#1565C0":"#e91e8c";
+                return (
+                  <div key={g}>
+                    <div style={{display:"inline-flex",alignItems:"center",gap:6,background:gc,borderRadius:5,padding:"4px 10px",marginBottom:12}}>
+                      <span style={{color:"#fff",fontWeight:800,fontSize:11,letterSpacing:1}}>{g==="masculino"?"♂ Masculino":"♀ Feminino"}</span>
+                    </div>
+                    <BracketView rounds={mod.genders[g].rounds} gc={gc}/>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+function RankingTab({ mods }) {
+  const calcPontos = (rounds) => {
+    const players = {};
+    const totalRounds = rounds.length;
+    rounds.forEach((r,ri)=>{
+      r.matches.forEach(m=>{
+        if(!m.p1||!m.p2||!m.winner) return;
+        const loser = m.winner===m.p1?m.p2:m.p1;
+        const isFinal = ri===totalRounds-1;
+        const isSemi  = ri===totalRounds-2;
+        players[m.winner] = (players[m.winner]||0) + (isFinal?10:isSemi?5:2);
+        if(loser&&loser!=="BYE") players[loser] = (players[loser]||0) + (isFinal?7:isSemi?3:1);
+      });
+    });
+    return players;
+  };
+
+  return (
+    <div style={{padding:"24px 32px"}}>
+      <div style={{textAlign:"center",marginBottom:24}}>
+        <div style={{fontFamily:"'Bebas Neue',cursive",fontSize:28,letterSpacing:6,color:MGOLD}}>🥇 CLASSIFICAÇÃO GERAL</div>
+        <div style={{color:"rgba(255,255,255,.3)",fontSize:10,letterSpacing:3,marginTop:4}}>PONTUAÇÃO POR FASE ALCANÇADA</div>
+        <div style={{display:"flex",gap:10,marginTop:12,justifyContent:"center",flexWrap:"wrap"}}>
+          {[["🏆 Campeão","10pts","#FFDF00"],["🥈 Vice","7pts","#94a3b8"],["🏅 Semifinal","5pts","#cd7f32"],["✅ Classificado","2pts","rgba(255,255,255,.4)"]].map(([l,p,c])=>(
+            <div key={l} style={{background:"rgba(255,255,255,.04)",border:"1px solid rgba(255,255,255,.1)",borderRadius:5,padding:"4px 10px",display:"flex",gap:6,alignItems:"center"}}>
+              <span style={{fontSize:11}}>{l}</span><span style={{fontWeight:800,color:c,fontSize:11}}>{p}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {mods.map(mod=>{
+        const meta = MODS_META.find(m=>m.id===mod.id)||{accent:"#FFDF00",emoji:"🏅"};
+        if(!mod.ativo) return (
+          <div key={mod.id} style={{marginBottom:20,opacity:.4}}>
+            <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:8}}>
+              <span style={{fontSize:20,filter:"grayscale(1)"}}>{meta.emoji}</span>
+              <span style={{fontFamily:"'Bebas Neue',cursive",fontSize:18,color:"rgba(255,255,255,.3)",letterSpacing:3}}>{mod.name}</span>
+              <div className="badge-em-breve" style={{marginLeft:"auto"}}><span>🔒</span> EM BREVE</div>
+            </div>
+          </div>
+        );
+
+        const mascPts = calcPontos(mod.genders.masculino.rounds);
+        const femPts  = calcPontos(mod.genders.feminino.rounds);
+        const allPts  = {};
+        [...Object.entries(mascPts),...Object.entries(femPts)].forEach(([n,p])=>{ allPts[n]=(allPts[n]||0)+p; });
+        const sorted = Object.entries(allPts).sort((a,b)=>b[1]-a[1]);
+
+        return (
+          <div key={mod.id} style={{marginBottom:28,animation:"fadeIn .5s ease"}}>
+            <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:12}}>
+              <span style={{fontSize:22}}>{meta.emoji}</span>
+              <span style={{fontFamily:"'Bebas Neue',cursive",fontSize:20,color:meta.accent,letterSpacing:3}}>{mod.name}</span>
+            </div>
+            {sorted.length===0 ? (
+              <div style={{color:"rgba(255,255,255,.2)",fontSize:12,padding:"12px 0"}}>Aguardando resultados...</div>
+            ) : (
+              <div style={{background:"rgba(255,255,255,.02)",borderRadius:10,overflow:"hidden",border:"1px solid rgba(255,255,255,.07)"}}>
+                <div style={{display:"grid",gridTemplateColumns:"44px 1fr 90px",padding:"8px 16px",background:"rgba(255,255,255,.05)",fontSize:9,letterSpacing:2,color:"rgba(255,255,255,.35)",textTransform:"uppercase"}}>
+                  <span>#</span><span>Atleta</span><span style={{textAlign:"right"}}>Pontos</span>
+                </div>
+                {sorted.map(([name,pts],i)=>(
+                  <div key={i} style={{display:"grid",gridTemplateColumns:"44px 1fr 90px",padding:"11px 16px",borderTop:"1px solid rgba(255,255,255,.04)",background:i===0?"rgba(255,223,0,.06)":"transparent",alignItems:"center"}}>
+                    <span style={{fontFamily:"'Bebas Neue',cursive",fontSize:20,color:i===0?MGOLD:i===1?"#94a3b8":i===2?"#cd7f32":"rgba(255,255,255,.35)"}}>
+                      {i===0?"🥇":i===1?"🥈":i===2?"🥉":i+1}
+                    </span>
+                    <span style={{fontWeight:i<3?700:400,fontSize:13,color:i===0?MGOLD:"#e2e8f0"}}>{name}</span>
+                    <span style={{textAlign:"right",fontWeight:800,fontSize:15,color:i===0?MGOLD:"rgba(255,255,255,.55)"}}>{pts}<span style={{fontSize:9,color:"rgba(255,255,255,.25)",marginLeft:2}}>pts</span></span>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+function App() {
+  const [tab, setTab] = useState("ao-vivo");
+  const [data, setData] = useState(null);
+
+  // Atualiza dados a cada 30 segundos automaticamente
+  useEffect(()=>{
+    const load = () => setData(getData());
+    load();
+    const t = setInterval(load, 30000);
+    return ()=>clearInterval(t);
+  },[]);
+
+  const mods = data?.mods || [];
+
+  return (
+    <div style={{minHeight:"100vh",display:"flex",flexDirection:"column",background:"#0a0f00"}}>
+      {/* HEADER */}
+      <header style={{background:"rgba(3,7,0,.97)",backdropFilter:"blur(16px)",borderBottom:"3px solid #FFDF00",padding:"0 20px",display:"flex",alignItems:"center",gap:12,position:"sticky",top:0,zIndex:100,boxShadow:"0 4px 24px rgba(255,223,0,.1)",flexShrink:0,flexWrap:"wrap"}}>
+        <div style={{display:"flex",alignItems:"center",gap:10,padding:"10px 0"}}>
+          <div style={{width:34,height:34,borderRadius:"50%",background:"linear-gradient(135deg,#009C3B,#002776)",border:"2px solid #FFDF00",display:"flex",alignItems:"center",justifyContent:"center",fontSize:16}}>🏆</div>
+          <div>
+            <div style={{fontFamily:"'Bebas Neue',cursive",fontSize:18,letterSpacing:4,color:"#FFDF00",lineHeight:1}}>COPA SYLAS 2026</div>
+            <div style={{fontSize:8,color:"rgba(255,255,255,.25)",letterSpacing:3}}>PLACAR AO VIVO · MIRACATU – SP</div>
+          </div>
+        </div>
+
+        <div style={{display:"flex",gap:6,marginLeft:"auto",flexWrap:"wrap",padding:"8px 0"}}>
+          {[{id:"ao-vivo",label:"📺 Ao Vivo"},{id:"chaves",label:"🏆 Chaveamento"},{id:"ranking",label:"🥇 Ranking"}].map(t=>(
+            <button key={t.id} className={`tab-btn${tab===t.id?" active":""}`} onClick={()=>setTab(t.id)}>{t.label}</button>
+          ))}
+        </div>
+
+        <div style={{display:"flex",alignItems:"center",gap:6,padding:"8px 0"}}>
+          <div style={{width:7,height:7,borderRadius:"50%",background:"#ef4444",animation:"pulse 1s ease-in-out infinite",flexShrink:0}}/>
+          <span style={{fontSize:9,color:"#ef4444",fontWeight:700,letterSpacing:2}}>AO VIVO</span>
+          <div style={{marginLeft:8,animation:"floatUp 2.5s ease-in-out infinite"}}><BRFlag size={20}/></div>
+        </div>
+      </header>
+
+      <FlagStrip h={40}/>
+
+      {/* CONTEÚDO */}
+      <main style={{flex:1}}>
+        {data===null ? (
+          <div style={{textAlign:"center",padding:"80px 20px"}}>
+            <div style={{fontSize:48,animation:"spin 1s linear infinite",display:"inline-block"}}>⚙️</div>
+            <div style={{color:"rgba(255,255,255,.3)",fontSize:13,marginTop:16,letterSpacing:2}}>Carregando dados...</div>
+          </div>
+        ) : mods.length===0 ? (
+          <div style={{textAlign:"center",padding:"80px 20px"}}>
+            <div style={{fontSize:48,marginBottom:16}}>🏆</div>
+            <div style={{fontFamily:"'Bebas Neue',cursive",fontSize:28,letterSpacing:4,color:"#FFDF00",marginBottom:8}}>COPA SYLAS 2026</div>
+            <div style={{color:"rgba(255,255,255,.3)",fontSize:13}}>As competições ainda não foram iniciadas.</div>
+            <div style={{color:"rgba(255,255,255,.15)",fontSize:11,marginTop:6}}>Aguarde o início dos jogos!</div>
+          </div>
+        ) : (
+          <>
+            {tab==="ao-vivo"  && <AoVivoTab mods={mods}/>}
+            {tab==="chaves"   && <ChaveamentoTab mods={mods}/>}
+            {tab==="ranking"  && <RankingTab mods={mods}/>}
+          </>
+        )}
+      </main>
+
+      <FlagStrip rev h={36}/>
+
+      <footer style={{background:"linear-gradient(135deg,#002776,#001a0a,#002776)",borderTop:"3px solid #FFDF00",padding:"12px 20px",textAlign:"center",flexShrink:0}}>
+        <div style={{display:"flex",alignItems:"center",justifyContent:"center",gap:10,flexWrap:"wrap"}}>
+          <BRFlag size={16}/>
+          <span style={{fontFamily:"'Bebas Neue',cursive",fontSize:13,letterSpacing:4,color:"#FFDF00"}}>COPA SYLAS 2026 · E.E. SYLAS BALTAZAR DE ARAÚJO · MIRACATU – SP</span>
+          <BRFlag size={16}/>
+        </div>
+        <div style={{marginTop:5,fontSize:11,color:"rgba(255,223,0,.22)",letterSpacing:5}}>★ ★ ★ ★ ★</div>
+      </footer>
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById("app")).render(<App/>);
+</script>
+</body>
+</html>
