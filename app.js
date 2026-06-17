@@ -510,14 +510,51 @@ function ModalityPage({ mod, onChange, canEdit, isMobile }) {
 // ─── ADMIN ────────────────────────────────────────────────────────────────────
 function Admin({ data, setData }) {
   const [newMod,setNewMod]=useState("");
-  const add=()=>{ if(!newMod.trim())return; const nd={...data,mods:[...data.mods,{id:uid(),name:newMod.trim(),emoji:"🏅",accent:"#FFDF00",genders:{masculino:mkGender("novo"),feminino:mkGender("novo")}}]}; setData(nd);saveData(nd);setNewMod(""); };
+  const add=()=>{ if(!newMod.trim())return; const nd={...data,mods:[...data.mods,{id:uid(),name:newMod.trim(),emoji:"🏅",accent:"#FFDF00",ativo:false,genders:{masculino:mkGender("novo"),feminino:mkGender("novo")}}]}; setData(nd);saveData(nd);setNewMod(""); };
   const remove=(id)=>{ if(!window.confirm("Remover modalidade?"))return; const nd={...data,mods:data.mods.filter(m=>m.id!==id)}; setData(nd);saveData(nd); };
   const reset=()=>{ if(!window.confirm("Zerar todos os dados?"))return; setData(INITIAL);saveData(INITIAL); };
+  const toggleAtivo=(id)=>{
+    const nd={...data,mods:data.mods.map(m=>m.id===id?{...m,ativo:!m.ativo}:m)};
+    setData(nd);saveData(nd);
+  };
   return (
     <div style={{padding:24,maxWidth:"100%"}}>
       <div style={{fontFamily:"'Bebas Neue',cursive",fontSize:26,color:MGOLD,letterSpacing:3,marginBottom:20}}>⚙️ PAINEL ADMIN</div>
+
+      {/* CONTROLE DO PLACAR PÚBLICO */}
+      <div style={{background:"rgba(255,255,255,.03)",border:"1px solid rgba(255,223,0,.15)",borderRadius:10,padding:18,marginBottom:14}}>
+        <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:4}}>
+          <span style={{fontSize:16}}>📺</span>
+          <div style={{color:MGOLD,fontSize:11,letterSpacing:3,textTransform:"uppercase",fontWeight:700}}>Placar Público — Controle por Modalidade</div>
+        </div>
+        <div style={{color:"rgba(255,255,255,.25)",fontSize:11,marginBottom:14}}>
+          Ative apenas as modalidades que já começaram. As demais aparecem como "Em breve 🔒" no placar.
+        </div>
+        {data.mods.map(m=>{
+          const isOn = m.ativo===true;
+          return (
+            <div key={m.id} style={{display:"flex",alignItems:"center",gap:12,padding:"11px 14px",background:"rgba(255,255,255,.03)",borderRadius:8,marginBottom:6,border:`1px solid ${isOn?m.accent+"55":"rgba(255,255,255,.07)"}`}}>
+              <span style={{fontSize:20,filter:isOn?"none":"grayscale(1)"}}>{m.emoji}</span>
+              <span style={{flex:1,fontSize:13,fontWeight:isOn?700:400,color:isOn?"#e2e8f0":"rgba(255,255,255,.4)"}}>{m.name}</span>
+              {isOn
+                ? <span style={{fontSize:10,color:MGREEN,background:"rgba(0,156,59,.15)",border:"1px solid rgba(0,156,59,.3)",borderRadius:4,padding:"2px 8px",letterSpacing:1}}>● AO VIVO</span>
+                : <span style={{fontSize:10,color:"rgba(255,255,255,.25)",background:"rgba(255,255,255,.04)",border:"1px solid rgba(255,255,255,.1)",borderRadius:4,padding:"2px 8px",letterSpacing:1}}>🔒 EM BREVE</span>
+              }
+              {/* Toggle switch */}
+              <div onClick={()=>toggleAtivo(m.id)} style={{width:44,height:24,borderRadius:12,background:isOn?"#009C3B":"rgba(255,255,255,.12)",cursor:"pointer",position:"relative",transition:"background .25s",flexShrink:0}}>
+                <div style={{position:"absolute",top:3,left:isOn?20:3,width:18,height:18,borderRadius:"50%",background:"#fff",transition:"left .25s",boxShadow:"0 1px 4px rgba(0,0,0,.4)"}}/>
+              </div>
+            </div>
+          );
+        })}
+        <div style={{marginTop:12,padding:"10px 14px",background:"rgba(0,156,59,.06)",border:"1px solid rgba(0,156,59,.15)",borderRadius:6,fontSize:11,color:"rgba(255,255,255,.35)"}}>
+          💡 Link do placar público: <span style={{color:MGOLD,fontFamily:"monospace"}}>seu-site/placar.html</span>
+        </div>
+      </div>
+
+      {/* MODALIDADES */}
       <div style={{background:"rgba(255,255,255,.03)",border:"1px solid rgba(255,255,255,.08)",borderRadius:10,padding:18,marginBottom:14}}>
-        <div style={{color:"rgba(255,255,255,.3)",fontSize:10,letterSpacing:3,textTransform:"uppercase",marginBottom:12}}>Modalidades Ativas</div>
+        <div style={{color:"rgba(255,255,255,.3)",fontSize:10,letterSpacing:3,textTransform:"uppercase",marginBottom:12}}>Gerenciar Modalidades</div>
         {data.mods.map(m=>(
           <div key={m.id} style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"9px 12px",background:"rgba(255,255,255,.03)",borderRadius:6,marginBottom:5,border:`1px solid ${m.accent}18`}}>
             <span style={{fontSize:13}}>{m.emoji} {m.name}</span>
@@ -530,6 +567,7 @@ function Admin({ data, setData }) {
           <button onClick={add} style={{background:MGOLD,color:"#0a0f00",border:"none",borderRadius:6,padding:"8px 16px",fontWeight:800,fontSize:12,cursor:"pointer"}}>+ ADD</button>
         </div>
       </div>
+
       <div style={{background:"rgba(239,68,68,.05)",border:"1px solid rgba(239,68,68,.18)",borderRadius:10,padding:16}}>
         <div style={{color:"#ef4444",fontSize:11,fontWeight:800,letterSpacing:2,marginBottom:7}}>⚠ ZONA DE PERIGO</div>
         <p style={{color:"rgba(255,255,255,.28)",fontSize:12,marginBottom:10}}>Apaga todos os resultados e restaura os dados iniciais.</p>
