@@ -285,7 +285,7 @@ function Home({ mods, onNav, isMobile }) {
         <div style={{position:"absolute",bottom:0,left:0,right:0}}><FlagStrip rev speed={24} h={isMobile?34:50}/></div>
         <div style={{position:"relative",zIndex:3,textAlign:"center",padding:isMobile?"60px 16px":"90px 24px"}}>
           <div className="fu1" style={{fontSize:11,letterSpacing:7,color:MGOLD,marginBottom:5}}>★ ★ ★ ★ ★</div>
-          <div style={{fontSize:isMobile?64:86,lineHeight:1,marginBottom:4,animation:"floatUp 3s ease-in-out infinite",filter:"drop-shadow(0 0 25px rgba(0,156,59,.9)) drop-shadow(0 0 50px rgba(255,223,0,.4))"}}>  <BRFlag size={isMobile?64:86}/></div>
+          <div style={{lineHeight:1,marginBottom:4,animation:"floatUp 3s ease-in-out infinite",filter:"drop-shadow(0 0 25px rgba(0,156,59,.9)) drop-shadow(0 0 50px rgba(255,223,0,.4))"}}><BRFlag size={isMobile?64:86}/></div>
           <div className="fu2" style={{fontFamily:"'Bebas Neue',cursive",fontSize:"clamp(58px,11vw,120px)",letterSpacing:6,lineHeight:.88,background:"linear-gradient(180deg,#FFDF00,#FFB800,#cc8800,#FFDF00)",WebkitBackgroundClip:"text",WebkitTextFillColor:"transparent",filter:"drop-shadow(0 4px 16px rgba(255,180,0,.4))"}}>
             COPA<br/>SYLAS
           </div>
@@ -323,7 +323,7 @@ function Home({ mods, onNav, isMobile }) {
       <div style={{background:"linear-gradient(135deg,#001a0a,#002776,#001a0a)",padding:isMobile?"26px 16px":"36px 24px",textAlign:"center",position:"relative",overflow:"hidden"}}>
         <div style={{position:"absolute",inset:0,background:"radial-gradient(ellipse 60% 80% at 50% 50%,rgba(0,156,59,.1),transparent)",pointerEvents:"none"}}/>
         <div style={{position:"relative",zIndex:1,display:"flex",alignItems:"center",justifyContent:"center",gap:20,flexWrap:"wrap"}}>
-          <div style={{fontSize:isMobile?46:60,animation:"floatUp 3s ease-in-out infinite",filter:"drop-shadow(0 0 18px rgba(0,156,59,.8))"}}>  <BRFlag size={isMobile?46:60}/></div>
+          <div style={{animation:"floatUp 3s ease-in-out infinite",filter:"drop-shadow(0 0 18px rgba(0,156,59,.8))"}}><BRFlag size={isMobile?46:60}/></div>
           <div>
             <div style={{fontFamily:"'Bebas Neue',cursive",fontSize:isMobile?22:28,letterSpacing:5,color:MGOLD}}>ORGULHO DO BRASIL</div>
             <div style={{color:"rgba(255,255,255,.3)",fontSize:11,letterSpacing:3,marginTop:4}}>★ ★ ★ ★ ★ · PENTACAMPEÕES</div>
@@ -474,7 +474,7 @@ function ModalityPage({ mod, onChange, canEdit, isMobile }) {
           <ellipse cx="140" cy="60" rx="310" ry="50" fill={gc} transform="rotate(-10,140,60)"/>
           <ellipse cx="700" cy="65" rx="220" ry="40" fill="#FFDF00" transform="rotate(8,700,65)"/>
         </svg>
-        <div style={{position:"absolute",right:14,top:"50%",transform:"translateY(-50%)",fontSize:isMobile?48:76,opacity:.05}}><BRFlag size={isMobile?48:76}/></div>
+        <div style={{position:"absolute",right:14,top:"50%",transform:"translateY(-50%)",opacity:.05}}><BRFlag size={isMobile?48:76}/></div>
         <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",flexWrap:"wrap",gap:10,position:"relative",zIndex:1}}>
           <div style={{display:"flex",alignItems:"center",gap:12}}>
             <span style={{fontSize:isMobile?34:42,filter:`drop-shadow(0 0 12px ${gc})`}}>{mod.emoji}</span>
