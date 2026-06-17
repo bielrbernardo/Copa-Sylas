@@ -5,7 +5,7 @@ html,body,#root{height:100%;}
 ::-webkit-scrollbar-thumb{background:#FFDF0030;border-radius:3px;}
 
 @keyframes flagScroll{from{transform:translateX(0)}to{transform:translateX(-50%)}}
-@keyframes flagScroll2{from{transform:translateX(-50%)}to{transform:translateX(0)}}
+@keyframes flagScroll2{from{transform:translateX(0)}to{transform:translateX(50%)}}
 @keyframes floatUp{0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}
 @keyframes fadeUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
 @keyframes slideIn{from{transform:translateX(-100%)}to{transform:translateX(0)}}
