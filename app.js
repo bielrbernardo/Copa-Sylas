@@ -300,11 +300,11 @@ function Home({ mods, onNav, isMobile }) {
         <div style={{position:"absolute",bottom:0,left:0,right:0,height:60,background:"linear-gradient(transparent,#0a0f00)",pointerEvents:"none"}}/>
       </div>
       <div style={{height:4,background:"linear-gradient(90deg,#002776,#009C3B,#FFDF00,#009C3B,#002776)"}}/>
-      <div style={{background:"linear-gradient(180deg,#0a0f00,#0d1a05)",padding:isMobile?"28px 14px":"44px 24px"}}>
+      <div style={{background:"linear-gradient(180deg,#0a0f00,#0d1a05)",padding:isMobile?"28px 14px":"44px 48px"}}>
         <div style={{textAlign:"center",marginBottom:26}}>
           <div style={{fontFamily:"'Bebas Neue',cursive",fontSize:26,letterSpacing:6,color:MGOLD,borderBottom:"3px solid #009C3B",display:"inline-block",paddingBottom:5}}>MODALIDADES 2026</div>
         </div>
-        <div style={{display:"grid",gridTemplateColumns:`repeat(auto-fit,minmax(${isMobile?140:158}px,1fr))`,gap:12,maxWidth:880,margin:"0 auto"}}>
+        <div style={{display:"grid",gridTemplateColumns:`repeat(auto-fit,minmax(${isMobile?140:158}px,1fr))`,gap:12,maxWidth:"100%",margin:"0 auto"}}>
           {mods.map(mod=>(
             <div key={mod.id} className="mcard" onClick={()=>onNav(mod.id)} style={{border:`1px solid ${mod.accent}44`,boxShadow:`0 4px 18px ${mod.accent}14`}}>
               <div style={{position:"absolute",left:0,top:0,bottom:0,width:3,background:`linear-gradient(180deg,${mod.accent},transparent)`}}/>
@@ -320,7 +320,7 @@ function Home({ mods, onNav, isMobile }) {
         </div>
       </div>
       <div style={{borderTop:"1px solid rgba(255,223,0,.07)"}}><FlagStrip speed={14} h={40}/></div>
-      <div style={{background:"linear-gradient(135deg,#001a0a,#002776,#001a0a)",padding:isMobile?"26px 16px":"36px 24px",textAlign:"center",position:"relative",overflow:"hidden"}}>
+      <div style={{background:"linear-gradient(135deg,#001a0a,#002776,#001a0a)",padding:isMobile?"26px 16px":"36px 48px",textAlign:"center",position:"relative",overflow:"hidden"}}>
         <div style={{position:"absolute",inset:0,background:"radial-gradient(ellipse 60% 80% at 50% 50%,rgba(0,156,59,.1),transparent)",pointerEvents:"none"}}/>
         <div style={{position:"relative",zIndex:1,display:"flex",alignItems:"center",justifyContent:"center",gap:20,flexWrap:"wrap"}}>
           <div style={{animation:"floatUp 3s ease-in-out infinite",filter:"drop-shadow(0 0 18px rgba(0,156,59,.8))"}}><BRFlag size={isMobile?46:60}/></div>
@@ -514,7 +514,7 @@ function Admin({ data, setData }) {
   const remove=(id)=>{ if(!window.confirm("Remover modalidade?"))return; const nd={...data,mods:data.mods.filter(m=>m.id!==id)}; setData(nd);saveData(nd); };
   const reset=()=>{ if(!window.confirm("Zerar todos os dados?"))return; setData(INITIAL);saveData(INITIAL); };
   return (
-    <div style={{padding:24,maxWidth:520}}>
+    <div style={{padding:24,maxWidth:"100%"}}>
       <div style={{fontFamily:"'Bebas Neue',cursive",fontSize:26,color:MGOLD,letterSpacing:3,marginBottom:20}}>⚙️ PAINEL ADMIN</div>
       <div style={{background:"rgba(255,255,255,.03)",border:"1px solid rgba(255,255,255,.08)",borderRadius:10,padding:18,marginBottom:14}}>
         <div style={{color:"rgba(255,255,255,.3)",fontSize:10,letterSpacing:3,textTransform:"uppercase",marginBottom:12}}>Modalidades Ativas</div>
