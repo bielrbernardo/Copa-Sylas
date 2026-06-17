@@ -17,7 +17,7 @@ html,body,#root{height:100%;}
 .shell{display:flex;flex-direction:column;min-height:100vh;background:#0a0f00;color:#e2e8f0;font-family:'Inter',sans-serif;}
 .body-wrap{display:flex;flex:1;overflow:hidden;}
 .sidebar{flex-shrink:0;background:rgba(3,7,0,.98);border-right:1px solid rgba(255,223,0,.1);display:flex;flex-direction:column;overflow-y:auto;transition:width .25s cubic-bezier(.4,0,.2,1);}
-.main-scroll{flex:1;overflow-y:auto;overflow-x:hidden;}
+.main-scroll{flex:1;overflow-y:auto;overflow-x:hidden;min-width:0;}
 
 .slink{display:flex;align-items:center;gap:9px;width:100%;padding:10px 11px;background:transparent;border:none;border-left:3px solid transparent;border-radius:0 6px 6px 0;cursor:pointer;color:rgba(255,255,255,.45);font-weight:400;font-size:13px;font-family:'Inter',sans-serif;text-align:left;transition:all .15s;margin-bottom:2px;}
 .slink:hover{background:rgba(255,223,0,.09)!important;color:#FFDF00!important;}
@@ -30,7 +30,7 @@ html,body,#root{height:100%;}
 .mrow:hover{background:rgba(255,255,255,.07)!important;}
 
 @media(min-width:1400px){.sidebar{}}
-.main-inner{max-width:1200px;margin:0 auto;}
+.main-inner{width:100%;}
 .tip-host{position:relative;}
 .tip-host .tip{position:absolute;left:calc(100% + 10px);top:50%;transform:translateY(-50%);background:#1a2a00;border:1px solid rgba(255,223,0,.3);border-radius:6px;padding:5px 10px;font-size:12px;color:#FFDF00;white-space:nowrap;opacity:0;pointer-events:none;transition:opacity .15s;z-index:999;}
 .tip-host:hover .tip{opacity:1;}
