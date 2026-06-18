@@ -23,11 +23,11 @@ const M_BG = "linear-gradient(160deg,#0a1628,#0d2137,#0a0f00)";
 const F_BG = "linear-gradient(160deg,#1a0015,#2d0022,#0a0f00)";
 
 const MODS_META = [
-  { id:"tenis",    name:"Tênis de Mesa", emoji:"🏓", accent:"#e91e8c" },
-  { id:"dama",     name:"Dama",          emoji:"♟️", accent:"#7c3aed" },
-  { id:"queimada", name:"Queimada",      emoji:"🔥", accent:"#ea580c" },
-  { id:"volei",    name:"Vôlei",         emoji:"🏐", accent:"#0ea5e9" },
-  { id:"futsal",   name:"Futsal",        emoji:"⚽", accent:"#009C3B" },
+  { id:"tenis",    name:"Tênis de Mesa", emoji:"🏓", accent:"#e91e8c", tipo:"nivel" },
+  { id:"dama",     name:"Dama",          emoji:"♟️", accent:"#7c3aed", tipo:"nivel" },
+  { id:"queimada", name:"Queimada",      emoji:"🔥", accent:"#ea580c", tipo:"misto" },
+  { id:"volei",    name:"Vôlei",         emoji:"🏐", accent:"#0ea5e9", tipo:"misto" },
+  { id:"futsal",   name:"Futsal",        emoji:"⚽", accent:"#009C3B", tipo:"misto" },
 ];
 
 // ─── HELPERS ──────────────────────────────────────────────────────────────────
@@ -88,20 +88,23 @@ function gerarChave(players, randomize, modName) {
 function saveData(d){ try{localStorage.setItem("copa26_v5",JSON.stringify(d));}catch(e){} }
 function loadData(){ try{const s=localStorage.getItem("copa26_v5");return s?JSON.parse(s):null;}catch(e){return null;} }
 
-const mkGender = (id) => ({
-  rounds: id==="tenis"
-    ? [mkRound("1ª Fase",["Jogador A","Jogador B","Jogador C","Jogador D"]),mkRound("Semifinal"),mkRound("Final")]
-    : [mkRound("Semifinal",["Time A","Time B","Time C","Time D"]),mkRound("Final")]
-});
+const mkNivel = () => ({ rounds:[mkRound("Semifinal"),mkRound("Final")] });
+const mkMisto = () => ({ rounds:[mkRound("Semifinal",["Time A","Time B","Time C","Time D"]),mkRound("Final")] });
 
-const INITIAL = { mods: MODS_META.map(m => ({ ...m, genders:{ masculino:mkGender(m.id), feminino:mkGender(m.id) } })) };
-INITIAL.mods[0].genders.masculino.rounds = [
+const INITIAL = { mods: MODS_META.map(m => {
+  if(m.tipo==="nivel") return { ...m, genders:{
+    fund_masc:mkNivel(), fund_fem:mkNivel(),
+    em_masc:mkNivel(),   em_fem:mkNivel(),
+  }};
+  return { ...m, genders:{ misto:mkMisto() }};
+})};
+INITIAL.mods[0].genders.fund_masc.rounds = [
   {id:"voga8zt",name:"Play-in",matches:[{id:"6vkw8ty",p1:"Christopher",p2:"José",winner:null},{id:"y5jzlqh",p1:"Paulo",p2:"João Pedro",winner:null},{id:"76pew7g",p1:"Vitor",p2:"Ruan",winner:null},{id:"1hm0708",p1:"Jullio",p2:"Eduardo",winner:null}]},
   {id:"mqm0524",name:"Quartas de Final",matches:[{id:"slz3uvv",p1:"Pedro V.",p2:"Leonardo A.",winner:null},{id:"7q3uvxt",p1:"Luiz H.",p2:null,winner:null},{id:"ucxx5ir",p1:"Gustavo",p2:"Endrew",winner:null},{id:"xcc4bar",p1:"Pietro",p2:null,winner:null},{id:"4sij69d",p1:"Marcelo",p2:"Davi",winner:null},{id:"5s7890y",p1:"Leonardo D.",p2:null,winner:null},{id:"svfu8xh",p1:"Arthur",p2:"Hector",winner:null},{id:"d7yp98b",p1:"Marcos",p2:null,winner:null}]},
   {id:"63c8e6q",name:"Semifinal",matches:[{id:"nqs6h4x",p1:null,p2:null,winner:null},{id:"kcsws97",p1:null,p2:null,winner:null}]},
   {id:"ly9dauk",name:"Final",matches:[{id:"srjjyb5",p1:null,p2:null,winner:null}]},
 ];
-INITIAL.mods[0].genders.feminino.rounds = [
+INITIAL.mods[0].genders.fund_fem.rounds = [
   {id:"tf1",name:"Quartas de Final",matches:[
     {id:"f1",p1:"Ana Bella",p2:"Vitória",winner:null},{id:"f2",p1:"Thifany",p2:"BYE",winner:"Thifany"},
     {id:"f3",p1:"Milena",p2:"Maria Cecília",winner:null},{id:"f4",p1:"Maria Vitória",p2:"BYE",winner:"Maria Vitória"},
@@ -563,18 +566,19 @@ function BulkModal({ onAdd, onClose }) {
 
 
 // ─── GERADOR DE CHAVES UI ────────────────────────────────────────────────────
-function GeradorChave({ mod, onSalvar, onClose }) {
+function GeradorChave({ mod, onSalvar, onClose, defaultCat, isNivel }) {
   const [raw,setRaw]=useState("");
-  const [gender,setGender]=useState("masculino");
+  const [cat,setCat]=useState(defaultCat||"masculino");
   const [randomize,setRandomize]=useState(true);
   const [rounds,setRounds]=useState(null);
   const players=raw.split("\n").map(s=>s.trim()).filter(Boolean);
-  const gc=gender==="masculino"?M_COLOR:F_COLOR;
+  const curT = isNivel ? NIVEL_TABS.find(t=>t.key===cat)||NIVEL_TABS[0] : {gc:mod.accent,label:"⚡ Misto",key:"misto"};
+  const gc = curT.gc;
 
   const gerar=()=>{ if(players.length<2)return; setRounds(gerarChave(players,randomize,mod.name)); };
   const salvar=()=>{
     if(!rounds) return;
-    onSalvar(gender, rounds);
+    onSalvar(cat, rounds);
     onClose();
   };
 
@@ -597,10 +601,15 @@ function GeradorChave({ mod, onSalvar, onClose }) {
             {/* Categoria */}
             <div style={{marginBottom:14}}>
               <div style={{color:"rgba(255,255,255,.35)",fontSize:10,letterSpacing:1,textTransform:"uppercase",marginBottom:6}}>Categoria</div>
-              <div style={{display:"flex",borderRadius:7,overflow:"hidden",border:"2px solid rgba(255,255,255,.1)"}}>
-                {["masculino","feminino"].map(g=>(
-                  <button key={g} onClick={()=>{setGender(g);setRounds(null);}} style={{flex:1,padding:"8px 0",border:"none",cursor:"pointer",background:gender===g?(g==="masculino"?M_COLOR:F_COLOR):"transparent",color:gender===g?"#fff":"rgba(255,255,255,.35)",fontWeight:800,fontSize:11,letterSpacing:1,textTransform:"uppercase",fontFamily:"'Inter',sans-serif",transition:"all .2s"}}>
-                    {g==="masculino"?"♂ Masc":"♀ Fem"}
+              <div style={{display:"flex",borderRadius:7,overflow:"hidden",border:"2px solid rgba(255,255,255,.1)",flexWrap:"wrap"}}>
+                {(isNivel ? NIVEL_TABS : [{key:"misto",label:"⚡ Misto",gc:mod.accent}]).map(t=>(
+                  <button key={t.key} onClick={()=>{setCat(t.key);setRounds(null);}}
+                    style={{flex:1,padding:"8px 6px",border:"none",cursor:"pointer",
+                      background:cat===t.key?t.gc:"transparent",
+                      color:cat===t.key?"#fff":"rgba(255,255,255,.35)",
+                      fontWeight:800,fontSize:10,letterSpacing:.5,textTransform:"uppercase",
+                      fontFamily:"'Inter',sans-serif",transition:"all .2s",whiteSpace:"nowrap"}}>
+                    {t.label}
                   </button>
                 ))}
               </div>
@@ -632,7 +641,7 @@ function GeradorChave({ mod, onSalvar, onClose }) {
             {/* Info estrutura */}
             {players.length>=2&&(
               <div style={{padding:"10px 12px",background:`${gc}12`,border:`1px solid ${gc}28`,borderRadius:6,marginBottom:14,fontSize:11}}>
-                <div style={{color:gc,fontWeight:700,marginBottom:4}}>📐 Estrutura</div>
+                <div style={{color:gc,fontWeight:700,marginBottom:4}}>📐 {curT.label}</div>
                 <div style={{color:"rgba(255,255,255,.45)"}}>{players.length} atletas → {nextPow2(players.length)} vagas</div>
                 <div style={{color:"rgba(255,255,255,.45)"}}>{nextPow2(players.length)-players.length} BYE(s) automáticos</div>
                 <div style={{color:"rgba(255,255,255,.45)"}}>{Math.log2(nextPow2(players.length))} fases até o campeão</div>
@@ -689,16 +698,30 @@ function GeradorChave({ mod, onSalvar, onClose }) {
 }
 
 // ─── MODALITY PAGE ────────────────────────────────────────────────────────────
+// Labels e cores por categoria
+const NIVEL_TABS = [
+  {key:"fund_masc", label:"📚 Fund. Masc", short:"F.Masc", gc:M_COLOR,  gbg:M_BG},
+  {key:"fund_fem",  label:"📚 Fund. Fem",  short:"F.Fem",  gc:F_COLOR,  gbg:F_BG},
+  {key:"em_masc",   label:"🎓 EM Masc",    short:"EM.M",   gc:"#0ea5e9",gbg:"linear-gradient(160deg,#001a28,#002038,#0a0f00)"},
+  {key:"em_fem",    label:"🎓 EM Fem",     short:"EM.F",   gc:"#a855f7", gbg:"linear-gradient(160deg,#1a0028,#280038,#0a0f00)"},
+];
+
 function ModalityPage({ mod, onChange, canEdit, isMobile }) {
-  const [gender,setGender]=useState("masculino");
-  const [subTab,setSubTab]=useState("chave"); // "chave" | "campeao"
+  const isNivel = mod.tipo==="nivel";
+  const defaultTab = isNivel?"fund_masc":"misto";
+  const [catTab,setCatTab]=useState(defaultTab);
+  const [subTab,setSubTab]=useState("chave");
   const [editMatch,setEditMatch]=useState(null);
   const [showBulk,setShowBulk]=useState(false);
   const [showGerador,setShowGerador]=useState(false);
-  const gc  = gender==="masculino"?M_COLOR:F_COLOR;
-  const gbg = gender==="masculino"?M_BG:F_BG;
-  const gData = mod.genders[gender];
-  const upd=(newRounds)=>onChange({...mod,genders:{...mod.genders,[gender]:{rounds:propagate(newRounds)}}});
+
+  // Cor e bg da aba atual
+  const curNivel = isNivel ? NIVEL_TABS.find(t=>t.key===catTab) : null;
+  const gc  = isNivel ? (curNivel?.gc||M_COLOR) : mod.accent;
+  const gbg = isNivel ? (curNivel?.gbg||M_BG) : "linear-gradient(160deg,#0a1628,#0d2137,#0a0f00)";
+  const gData = mod.genders[catTab];
+
+  const upd=(newRounds)=>onChange({...mod,genders:{...mod.genders,[catTab]:{rounds:propagate(newRounds)}}});
   const handleWin    =(mid,w)=>upd(gData.rounds.map(r=>({...r,matches:r.matches.map(m=>m.id===mid?{...m,winner:w}:m)})));
   const handleSave   =(mid,p1,p2)=>upd(gData.rounds.map(r=>({...r,matches:r.matches.map(m=>m.id===mid?{...m,p1,p2,winner:null}:m)})));
   const handleRemove =(mid)=>upd(gData.rounds.map(r=>({...r,matches:r.matches.filter(m=>m.id!==mid)})));
@@ -715,10 +738,10 @@ function ModalityPage({ mod, onChange, canEdit, isMobile }) {
     [nr[idx],nr[swap]]=[nr[swap],nr[idx]];
     upd(nr);
   };
-  const handleSalvarGerador=(g, newRounds)=>{
+  const handleSalvarGerador=(g,newRounds)=>{
     onChange({...mod,genders:{...mod.genders,[g]:{rounds:newRounds}}});
   };
-  const handleBulk   =(players)=>{
+  const handleBulk=(players)=>{
     const ms=[];for(let i=0;i<players.length;i+=2)ms.push(mkMatch(players[i]||null,players[i+1]||null));
     const fid=gData.rounds[0]?.id;
     upd(gData.rounds.map(r=>r.id===fid?{...r,matches:[...r.matches,...ms]}:r));
@@ -751,17 +774,30 @@ function ModalityPage({ mod, onChange, canEdit, isMobile }) {
             )}
           </div>
         </div>
-        {/* Tabs: gênero + campeão */}
-        <div style={{display:"flex",marginTop:16,gap:8,flexWrap:"wrap",alignItems:"center"}}>
+        {/* Tabs dinâmicas */}
+        <div style={{display:"flex",marginTop:16,gap:6,flexWrap:"wrap",alignItems:"center"}}>
           <div style={{display:"flex",borderRadius:8,overflow:"hidden",border:"2px solid rgba(255,255,255,.1)"}}>
-            {["masculino","feminino"].map(g=>(
-              <button key={g} onClick={()=>{setGender(g);setSubTab("chave");}} style={{padding:"8px 18px",border:"none",cursor:"pointer",background:gender===g&&subTab!=="campeao"?(g==="masculino"?M_COLOR:F_COLOR):"transparent",color:gender===g&&subTab!=="campeao"?"#fff":"rgba(255,255,255,.38)",fontWeight:800,fontSize:12,letterSpacing:1,textTransform:"uppercase",fontFamily:"'Inter',sans-serif",transition:"all .2s"}}>
-                {g==="masculino"?"♂ Masculino":"♀ Feminino"}
+            {isNivel ? NIVEL_TABS.map(t=>(
+              <button key={t.key} onClick={()=>{setCatTab(t.key);setSubTab("chave");}}
+                style={{padding:"8px 14px",border:"none",cursor:"pointer",
+                  background:catTab===t.key&&subTab!=="campeao"?t.gc:"transparent",
+                  color:catTab===t.key&&subTab!=="campeao"?"#fff":"rgba(255,255,255,.38)",
+                  fontWeight:800,fontSize:isMobile?10:12,letterSpacing:.5,
+                  textTransform:"uppercase",fontFamily:"'Inter',sans-serif",transition:"all .2s",
+                  whiteSpace:"nowrap"}}>
+                {isMobile?t.short:t.label}
               </button>
-            ))}
+            )) : (
+              <button style={{padding:"8px 18px",border:"none",background:mod.accent,color:"#fff",fontWeight:800,fontSize:12,letterSpacing:1,textTransform:"uppercase",fontFamily:"'Inter',sans-serif"}}>
+                ⚡ Misto
+              </button>
+            )}
           </div>
-          {/* Aba Campeão */}
-          <button onClick={()=>setSubTab(subTab==="campeao"?"chave":"campeao")} style={{padding:"8px 16px",border:`2px solid ${subTab==="campeao"?"rgba(255,223,0,.5)":"rgba(255,223,0,.2)"}`,borderRadius:8,cursor:"pointer",background:subTab==="campeao"?"rgba(255,223,0,.15)":"transparent",color:subTab==="campeao"?MGOLD:"rgba(255,223,0,.4)",fontWeight:800,fontSize:12,letterSpacing:1,fontFamily:"'Inter',sans-serif",transition:"all .2s"}}>
+          <button onClick={()=>setSubTab(subTab==="campeao"?"chave":"campeao")}
+            style={{padding:"8px 14px",border:`2px solid ${subTab==="campeao"?"rgba(255,223,0,.5)":"rgba(255,223,0,.2)"}`,borderRadius:8,cursor:"pointer",
+              background:subTab==="campeao"?"rgba(255,223,0,.15)":"transparent",
+              color:subTab==="campeao"?MGOLD:"rgba(255,223,0,.4)",fontWeight:800,fontSize:12,
+              letterSpacing:1,fontFamily:"'Inter',sans-serif",transition:"all .2s",whiteSpace:"nowrap"}}>
             🏆 Campeão
           </button>
         </div>
@@ -771,28 +807,28 @@ function ModalityPage({ mod, onChange, canEdit, isMobile }) {
       {subTab==="campeao" && (
         <div style={{background:"linear-gradient(135deg,#0a0f00,#0d1a05)",minHeight:300,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",padding:"48px 24px",gap:32}}>
           <div style={{fontFamily:"'Bebas Neue',cursive",fontSize:22,letterSpacing:5,color:"rgba(255,255,255,.2)"}}>CAMPEÕES DA {mod.name.toUpperCase()}</div>
-          <div style={{display:"flex",gap:32,flexWrap:"wrap",justifyContent:"center"}}>
-            {["masculino","feminino"].map(g=>{
-              const gd=mod.genders[g];
+          <div style={{display:"flex",gap:24,flexWrap:"wrap",justifyContent:"center"}}>
+            {(isNivel ? NIVEL_TABS : [{key:"misto",label:"⚡ Misto",gc:mod.accent}]).map(t=>{
+              const gd=mod.genders[t.key];
+              if(!gd) return null;
               const campeao=gd.rounds[gd.rounds.length-1]?.matches[0]?.winner;
-              const gc2=g==="masculino"?M_COLOR:F_COLOR;
               return (
-                <div key={g} style={{display:"flex",flexDirection:"column",alignItems:"center",gap:12,minWidth:200}}>
-                  <div style={{background:gc2,borderRadius:8,padding:"4px 14px",fontSize:11,fontWeight:800,color:"#fff",letterSpacing:2,textTransform:"uppercase"}}>
-                    {g==="masculino"?"♂ Masculino":"♀ Feminino"}
+                <div key={t.key} style={{display:"flex",flexDirection:"column",alignItems:"center",gap:12,minWidth:180}}>
+                  <div style={{background:t.gc,borderRadius:8,padding:"4px 14px",fontSize:11,fontWeight:800,color:"#fff",letterSpacing:1,textTransform:"uppercase",textAlign:"center"}}>
+                    {t.label}
                   </div>
                   {campeao ? (
-                    <div style={{display:"flex",flexDirection:"column",alignItems:"center",gap:10,animation:"fadeUp .5s ease"}}>
-                      <div style={{fontSize:56,filter:"drop-shadow(0 0 20px rgba(255,223,0,.6))",animation:"floatUp 3s ease-in-out infinite"}}>🏆</div>
-                      <div style={{background:"linear-gradient(135deg,#FFDF00,#FFB800,#cc8800)",color:"#0a0f00",borderRadius:12,padding:"16px 28px",fontWeight:900,fontSize:20,textAlign:"center",boxShadow:"0 0 40px rgba(255,223,0,.5)",border:"3px solid rgba(255,255,255,.3)",whiteSpace:"nowrap"}}>
+                    <div style={{display:"flex",flexDirection:"column",alignItems:"center",gap:10}}>
+                      <div style={{fontSize:52,filter:"drop-shadow(0 0 20px rgba(255,223,0,.6))",animation:"floatUp 3s ease-in-out infinite"}}>🏆</div>
+                      <div style={{background:"linear-gradient(135deg,#FFDF00,#FFB800,#cc8800)",color:"#0a0f00",borderRadius:12,padding:"14px 24px",fontWeight:900,fontSize:18,textAlign:"center",boxShadow:"0 0 40px rgba(255,223,0,.5)",border:"3px solid rgba(255,255,255,.3)",whiteSpace:"nowrap"}}>
                         {campeao}
                       </div>
-                      <div style={{fontSize:16,letterSpacing:6,color:"rgba(255,223,0,.5)"}}>★ ★ ★ ★ ★</div>
+                      <div style={{fontSize:14,letterSpacing:5,color:"rgba(255,223,0,.5)"}}>★ ★ ★ ★ ★</div>
                     </div>
                   ) : (
                     <div style={{display:"flex",flexDirection:"column",alignItems:"center",gap:8,opacity:.3}}>
-                      <div style={{fontSize:48}}>🏆</div>
-                      <div style={{color:"rgba(255,255,255,.3)",fontSize:12,letterSpacing:2}}>A DECIDIR</div>
+                      <div style={{fontSize:44}}>🏆</div>
+                      <div style={{color:"rgba(255,255,255,.3)",fontSize:11,letterSpacing:2}}>A DECIDIR</div>
                     </div>
                   )}
                 </div>
@@ -813,7 +849,7 @@ function ModalityPage({ mod, onChange, canEdit, isMobile }) {
       )}
       {editMatch&&<EditModal match={editMatch} onSave={handleSave} onRemove={handleRemove} onClose={()=>setEditMatch(null)}/>}
       {showBulk&&<BulkModal onAdd={handleBulk} onClose={()=>setShowBulk(false)}/>}
-      {showGerador&&<GeradorChave mod={mod} onSalvar={handleSalvarGerador} onClose={()=>setShowGerador(false)}/>}
+      {showGerador&&<GeradorChave mod={mod} onSalvar={handleSalvarGerador} onClose={()=>setShowGerador(false)} defaultCat={catTab} isNivel={isNivel}/>}
     </div>
   );
 }
