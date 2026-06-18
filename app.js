@@ -85,8 +85,19 @@ function gerarChave(players, randomize, modName) {
   return rounds;
 }
 
-function saveData(d){ try{localStorage.setItem("copa26_v5",JSON.stringify(d));}catch(e){} }
-function loadData(){ try{const s=localStorage.getItem("copa26_v5");return s?JSON.parse(s):null;}catch(e){return null;} }
+function saveData(d){ try{localStorage.setItem("copa26_v6",JSON.stringify(d));}catch(e){} }
+function loadData(){
+  try{
+    // Tenta chave nova primeiro
+    let s=localStorage.getItem("copa26_v6");
+    if(!s) {
+      // Migra da chave antiga se existir
+      s=localStorage.getItem("copa26_v5");
+      if(s) localStorage.removeItem("copa26_v5");
+    }
+    return s?JSON.parse(s):null;
+  }catch(e){return null;}
+}
 
 const mkNivel = () => ({ rounds:[mkRound("Semifinal"),mkRound("Final")] });
 const mkMisto = () => ({ rounds:[mkRound("Semifinal",["Time A","Time B","Time C","Time D"]),mkRound("Final")] });
@@ -706,7 +717,40 @@ const NIVEL_TABS = [
   {key:"em_fem",    label:"🎓 EM Fem",     short:"EM.F",   gc:"#a855f7", gbg:"linear-gradient(160deg,#1a0028,#280038,#0a0f00)"},
 ];
 
-function ModalityPage({ mod, onChange, canEdit, isMobile }) {
+// Migra genders antigos (masculino/feminino) para novo formato
+function migrarGenders(mod) {
+  if(mod.tipo==="nivel") {
+    const g = mod.genders||{};
+    // Se ainda tem formato antigo, migra
+    if(g.masculino && !g.fund_masc) {
+      return { ...mod, genders:{
+        fund_masc: g.masculino,
+        fund_fem:  g.feminino || {rounds:[mkRound("Semifinal"),mkRound("Final")]},
+        em_masc:   g.em_masc  || {rounds:[mkRound("Semifinal"),mkRound("Final")]},
+        em_fem:    g.em_fem   || {rounds:[mkRound("Semifinal"),mkRound("Final")]},
+      }};
+    }
+    // Garantir que todas as 4 categorias existem
+    return { ...mod, genders:{
+      fund_masc: g.fund_masc || {rounds:[mkRound("Semifinal"),mkRound("Final")]},
+      fund_fem:  g.fund_fem  || {rounds:[mkRound("Semifinal"),mkRound("Final")]},
+      em_masc:   g.em_masc   || {rounds:[mkRound("Semifinal"),mkRound("Final")]},
+      em_fem:    g.em_fem    || {rounds:[mkRound("Semifinal"),mkRound("Final")]},
+    }};
+  }
+  if(mod.tipo==="misto") {
+    const g = mod.genders||{};
+    if(!g.misto) {
+      // Pega o primeiro gender disponível como misto
+      const first = g.masculino || g.misto || {rounds:[mkRound("Semifinal"),mkRound("Final")]};
+      return { ...mod, genders:{ misto: first }};
+    }
+  }
+  return mod;
+}
+
+function ModalityPage({ mod: modRaw, onChange, canEdit, isMobile }) {
+  const mod = migrarGenders(modRaw);
   const isNivel = mod.tipo==="nivel";
   const defaultTab = isNivel?"fund_masc":"misto";
   const [catTab,setCatTab]=useState(defaultTab);
@@ -719,9 +763,9 @@ function ModalityPage({ mod, onChange, canEdit, isMobile }) {
   const curNivel = isNivel ? NIVEL_TABS.find(t=>t.key===catTab) : null;
   const gc  = isNivel ? (curNivel?.gc||M_COLOR) : mod.accent;
   const gbg = isNivel ? (curNivel?.gbg||M_BG) : "linear-gradient(160deg,#0a1628,#0d2137,#0a0f00)";
-  const gData = mod.genders[catTab];
+  const gData = mod.genders[catTab] || {rounds:[mkRound("Semifinal"),mkRound("Final")]};
 
-  const upd=(newRounds)=>onChange({...mod,genders:{...mod.genders,[catTab]:{rounds:propagate(newRounds)}}});
+  const upd=(newRounds)=>onChange({...modRaw,...mod,genders:{...mod.genders,[catTab]:{rounds:propagate(newRounds)}}});
   const handleWin    =(mid,w)=>upd(gData.rounds.map(r=>({...r,matches:r.matches.map(m=>m.id===mid?{...m,winner:w}:m)})));
   const handleSave   =(mid,p1,p2)=>upd(gData.rounds.map(r=>({...r,matches:r.matches.map(m=>m.id===mid?{...m,p1,p2,winner:null}:m)})));
   const handleRemove =(mid)=>upd(gData.rounds.map(r=>({...r,matches:r.matches.filter(m=>m.id!==mid)})));
