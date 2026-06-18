@@ -96,16 +96,10 @@ const mkGender = (id) => ({
 
 const INITIAL = { mods: MODS_META.map(m => ({ ...m, genders:{ masculino:mkGender(m.id), feminino:mkGender(m.id) } })) };
 INITIAL.mods[0].genders.masculino.rounds = [
-  {id:"tm1",name:"1ª Fase",matches:[
-    {id:"a1",p1:"Christopher",p2:"José",winner:null},{id:"a2",p1:"Paulo",p2:"João Pedro",winner:null},
-    {id:"a3",p1:"Vitor",p2:"Ruan",winner:null},{id:"a4",p1:"Jullio",p2:"Eduardo",winner:null},
-    {id:"a5",p1:"Pedro V",p2:"Leo A",winner:null},{id:"a6",p1:"Luiz H",p2:"Gustavo",winner:null},
-    {id:"a7",p1:"Endrew",p2:"Pietro",winner:null},{id:"a8",p1:"Marcelo",p2:"Davi",winner:null},
-    {id:"a9",p1:"Leonardo D",p2:"Arthur",winner:null},{id:"a10",p1:"Hector",p2:"Marcos",winner:null},
-  ]},
-  {id:"tm2",name:"Quartas de Final",matches:[{id:"b1",p1:null,p2:null,winner:null},{id:"b2",p1:null,p2:null,winner:null},{id:"b3",p1:null,p2:null,winner:null},{id:"b4",p1:null,p2:null,winner:null}]},
-  {id:"tm3",name:"Semifinal",matches:[{id:"c1",p1:null,p2:null,winner:null},{id:"c2",p1:null,p2:null,winner:null}]},
-  {id:"tm4",name:"Final",matches:[{id:"d1",p1:null,p2:null,winner:null}]},
+  {id:"voga8zt",name:"Play-in",matches:[{id:"6vkw8ty",p1:"Christopher",p2:"José",winner:null},{id:"y5jzlqh",p1:"Paulo",p2:"João Pedro",winner:null},{id:"76pew7g",p1:"Vitor",p2:"Ruan",winner:null},{id:"1hm0708",p1:"Jullio",p2:"Eduardo",winner:null}]},
+  {id:"mqm0524",name:"Quartas de Final",matches:[{id:"slz3uvv",p1:"Pedro V.",p2:"Leonardo A.",winner:null},{id:"7q3uvxt",p1:"Luiz H.",p2:null,winner:null},{id:"ucxx5ir",p1:"Gustavo",p2:"Endrew",winner:null},{id:"xcc4bar",p1:"Pietro",p2:null,winner:null},{id:"4sij69d",p1:"Marcelo",p2:"Davi",winner:null},{id:"5s7890y",p1:"Leonardo D.",p2:null,winner:null},{id:"svfu8xh",p1:"Arthur",p2:"Hector",winner:null},{id:"d7yp98b",p1:"Marcos",p2:null,winner:null}]},
+  {id:"63c8e6q",name:"Semifinal",matches:[{id:"nqs6h4x",p1:null,p2:null,winner:null},{id:"kcsws97",p1:null,p2:null,winner:null}]},
+  {id:"ly9dauk",name:"Final",matches:[{id:"srjjyb5",p1:null,p2:null,winner:null}]},
 ];
 INITIAL.mods[0].genders.feminino.rounds = [
   {id:"tf1",name:"Quartas de Final",matches:[
