@@ -50,6 +50,41 @@ function propagate(rounds) {
   }
   return r;
 }
+
+// ─── GERADOR DE CHAVES ────────────────────────────────────────────────────────
+function shuffleArr(arr) {
+  const a=[...arr];
+  for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}
+  return a;
+}
+function nextPow2(n){ let p=1; while(p<n)p*=2; return p; }
+function gerarChave(players, randomize, modName) {
+  const list = randomize ? shuffleArr(players) : [...players];
+  const size = nextPow2(list.length);
+  while(list.length<size) list.push("BYE");
+  const roundNames = ["Final","Final","Semifinal","Quartas de Final","Oitavas","1ª Fase","2ª Fase","3ª Fase"];
+  const rounds = [];
+  const firstMatches = [];
+  for(let i=0;i<list.length;i+=2){
+    const p1=list[i], p2=list[i+1];
+    firstMatches.push({id:uid(),p1,p2,winner:p2==="BYE"?p1:null});
+  }
+  const firstName = size<=2?"Final":size<=4?"Semifinal":size<=8?"Quartas de Final":size<=16?"1ª Fase":"Fase Inicial";
+  rounds.push({id:uid(),name:firstName,matches:firstMatches});
+  let prev=firstMatches;
+  while(prev.length>1){
+    const next=[];
+    for(let i=0;i<prev.length;i+=2){
+      next.push({id:uid(),p1:prev[i]?.winner||null,p2:prev[i+1]?.winner||null,winner:null});
+    }
+    const n=next.length;
+    const name=n===1?"Final":n===2?"Semifinal":n===4?"Quartas de Final":"Fase";
+    rounds.push({id:uid(),name,matches:next});
+    prev=next;
+  }
+  return rounds;
+}
+
 function saveData(d){ try{localStorage.setItem("copa26_v5",JSON.stringify(d));}catch(e){} }
 function loadData(){ try{const s=localStorage.getItem("copa26_v5");return s?JSON.parse(s):null;}catch(e){return null;} }
 
@@ -360,37 +395,104 @@ function MatchCard({ match, gc, canEdit, onWin, onEdit }) {
   );
 }
 
-// ─── BRACKET ─────────────────────────────────────────────────────────────────
+// ─── BRACKET COM LINHAS SVG ──────────────────────────────────────────────────
+const CARD_H=74, CARD_W=188, H_GAP=36, V_GAP=10;
+function getMatchY(ri,mi){ const f=Math.pow(2,ri); return (f-1)*(CARD_H+V_GAP)/2+mi*f*(CARD_H+V_GAP); }
+
 function Bracket({ rounds, gc, canEdit, onWin, onEdit, onAddMatch, onRename, onAddRound, onRemoveRound }) {
   const champ=rounds[rounds.length-1]?.matches[0]?.winner;
+  const maxMatches=rounds[0]?.matches.length||1;
+  const totalH=Math.pow(2,rounds.length-1)*(CARD_H+V_GAP)+80;
+  const totalW=rounds.length*(CARD_W+H_GAP)+(champ?230:40)+(canEdit?60:0);
   return (
-    <div style={{overflowX:"auto",paddingBottom:24}}>
-      <div style={{display:"flex",gap:16,minWidth:"max-content",alignItems:"flex-start"}}>
-        {rounds.map(round=>(
-          <div key={round.id} style={{minWidth:195}}>
-            <div style={{display:"flex",alignItems:"center",gap:5,marginBottom:8}}>
+    <div style={{overflowX:"auto",overflowY:"hidden",paddingBottom:24}}>
+      <div style={{position:"relative",width:totalW,height:totalH}}>
+
+        {/* SVG linhas conectoras */}
+        <svg style={{position:"absolute",inset:0,width:"100%",height:"100%",pointerEvents:"none",overflow:"visible"}}>
+          {rounds.map((round,ri)=>{
+            if(ri===rounds.length-1) return null;
+            return round.matches.map((match,mi)=>{
+              const x1=ri*(CARD_W+H_GAP)+CARD_W;
+              const y1=getMatchY(ri,mi)+CARD_H/2+24;
+              const nmi=Math.floor(mi/2);
+              const x2=(ri+1)*(CARD_W+H_GAP);
+              const y2=getMatchY(ri+1,nmi)+CARD_H/2+24;
+              const mx=x1+H_GAP/2;
+              const won=match.winner!==null;
+              const lc=won?gc:"rgba(255,255,255,.1)";
+              const sw=won?2:1.5;
+              const da=won?"none":"5,4";
+              return (
+                <g key={match.id}>
+                  <line x1={x1} y1={y1} x2={mx} y2={y1} stroke={lc} strokeWidth={sw} strokeDasharray={da}/>
+                  <line x1={mx} y1={y1} x2={mx} y2={y2} stroke={lc} strokeWidth={sw} strokeDasharray={da}/>
+                  <line x1={mx} y1={y2} x2={x2} y2={y2} stroke={lc} strokeWidth={sw} strokeDasharray={da}/>
+                  {won&&<circle cx={x2} cy={y2} r={3.5} fill={gc}/>}
+                </g>
+              );
+            });
+          })}
+        </svg>
+
+        {/* Cards */}
+        {rounds.map((round,ri)=>(
+          <div key={round.id}>
+            {/* Label fase */}
+            <div style={{position:"absolute",left:ri*(CARD_W+H_GAP),top:0,width:CARD_W,textAlign:"center"}}>
               {canEdit
-                ?<input value={round.name} onChange={e=>onRename(round.id,e.target.value)} style={{background:"transparent",border:"none",borderBottom:`1px solid ${gc}44`,color:gc,fontSize:10,fontWeight:800,letterSpacing:2,textTransform:"uppercase",outline:"none",fontFamily:"'Inter',sans-serif",width:"100%",padding:"2px 0"}}/>
-                :<span style={{fontSize:10,fontWeight:800,letterSpacing:2,textTransform:"uppercase",color:gc,padding:"3px 10px",background:`${gc}12`,borderRadius:4}}>{round.name}</span>
+                ?<input value={round.name} onChange={e=>onRename(round.id,e.target.value)}
+                    style={{background:"transparent",border:"none",borderBottom:`1px solid ${gc}44`,color:gc,fontSize:9,fontWeight:800,letterSpacing:2,textTransform:"uppercase",outline:"none",fontFamily:"'Inter',sans-serif",width:"80%",padding:"2px 0",textAlign:"center"}}/>
+                :<span style={{fontSize:9,fontWeight:800,letterSpacing:2,textTransform:"uppercase",color:gc,padding:"3px 10px",background:`${gc}14`,borderRadius:4,display:"inline-block"}}>{round.name}</span>
               }
-              {canEdit&&<button onClick={()=>onRemoveRound(round.id)} style={{background:"none",border:"none",color:"#ef4444",cursor:"pointer",fontSize:12,padding:0,flexShrink:0}}>🗑</button>}
+              {canEdit&&<button onClick={()=>onRemoveRound(round.id)} style={{background:"none",border:"none",color:"#ef4444",cursor:"pointer",fontSize:11,padding:"0 4px",verticalAlign:"middle"}}>🗑</button>}
             </div>
-            <div style={{display:"flex",flexDirection:"column",gap:8}}>
-              {round.matches.map(m=><MatchCard key={m.id} match={m} gc={gc} canEdit={canEdit} onWin={onWin} onEdit={onEdit}/>)}
-            </div>
-            {canEdit&&<button onClick={()=>onAddMatch(round.id)} style={{marginTop:7,background:"transparent",border:`1px dashed ${gc}44`,borderRadius:6,padding:"5px",color:`${gc}77`,fontSize:11,cursor:"pointer",fontFamily:"'Inter',sans-serif",width:"100%"}}>+ confronto</button>}
+
+            {round.matches.map((match,mi)=>{
+              const x=ri*(CARD_W+H_GAP);
+              const y=getMatchY(ri,mi)+24;
+              const isEmpty=!match.p1&&!match.p2;
+              return (
+                <div key={match.id} style={{position:"absolute",left:x,top:y,width:CARD_W,height:CARD_H,background:isEmpty?"rgba(255,255,255,.02)":"rgba(255,255,255,.05)",border:`1px solid ${match.winner?gc+"55":"rgba(255,255,255,.1)"}`,borderRadius:8,overflow:"hidden",opacity:isEmpty?.3:1,boxShadow:match.winner?`0 0 14px ${gc}22`:"none",position:"absolute"}}>
+                  {canEdit&&!isEmpty&&<button onClick={()=>onEdit(match)} style={{position:"absolute",top:3,right:3,background:"none",border:"none",color:"rgba(255,255,255,.2)",cursor:"pointer",fontSize:10,zIndex:1}}>✏️</button>}
+                  {[match.p1,match.p2].map((n,pi)=>(
+                    <div key={pi} className="mrow" onClick={()=>canEdit&&n&&n!=="BYE"&&onWin(match.id,n)}
+                      style={{height:"50%",padding:"0 10px",display:"flex",alignItems:"center",gap:6,
+                        borderBottom:pi===0?"1px solid rgba(255,255,255,.07)":"none",
+                        background:match.winner===n?`${gc}28`:"transparent",
+                        cursor:canEdit&&n&&n!=="BYE"?"pointer":"default",
+                        color:match.winner===n?gc:n&&n!=="BYE"?"#e2e8f0":"rgba(255,255,255,.2)",
+                        fontWeight:match.winner===n?800:400,fontSize:12}}>
+                      {match.winner===n&&<div style={{width:14,height:14,borderRadius:"50%",background:gc,display:"flex",alignItems:"center",justifyContent:"center",fontSize:8,color:"#0a0f00",fontWeight:900,flexShrink:0}}>✓</div>}
+                      <span style={{flex:1,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{n||"—"}</span>
+                      {n==="BYE"&&<span style={{fontSize:9,color:"#64748b"}}>bye</span>}
+                    </div>
+                  ))}
+                </div>
+              );
+            })}
+
+            {canEdit&&(
+              <div style={{position:"absolute",left:ri*(CARD_W+H_GAP),top:getMatchY(ri,round.matches.length)+24+CARD_H+6}}>
+                <button onClick={()=>onAddMatch(round.id)} style={{background:"transparent",border:`1px dashed ${gc}44`,borderRadius:6,padding:"4px 8px",color:`${gc}77`,fontSize:10,cursor:"pointer",fontFamily:"'Inter',sans-serif",width:CARD_W}}>+ confronto</button>
+              </div>
+            )}
           </div>
         ))}
+
+        {/* + Nova Fase */}
         {canEdit&&(
-          <div style={{paddingTop:24}}>
-            <button onClick={onAddRound} style={{background:"transparent",border:"1px dashed rgba(255,223,0,.28)",borderRadius:8,padding:"13px 10px",color:"rgba(255,223,0,.45)",fontSize:11,cursor:"pointer",fontFamily:"'Inter',sans-serif",writingMode:"vertical-rl"}}>+ Nova Fase</button>
+          <div style={{position:"absolute",left:rounds.length*(CARD_W+H_GAP)+4,top:getMatchY(0,0)+24}}>
+            <button onClick={onAddRound} style={{background:"transparent",border:"1px dashed rgba(255,223,0,.28)",borderRadius:8,padding:"12px 9px",color:"rgba(255,223,0,.45)",fontSize:10,cursor:"pointer",fontFamily:"'Inter',sans-serif",writingMode:"vertical-rl"}}>+ Fase</button>
           </div>
         )}
+
+        {/* Campeão */}
         {champ&&(
-          <div style={{display:"flex",flexDirection:"column",alignItems:"center",paddingTop:24,gap:8}}>
+          <div style={{position:"absolute",left:rounds.length*(CARD_W+H_GAP)+(canEdit?52:8),top:getMatchY(rounds.length-1,0)+24,display:"flex",flexDirection:"column",alignItems:"center",gap:6}}>
             <div style={{fontSize:9,fontWeight:800,letterSpacing:3,color:MGOLD}}>★ CAMPEÃO ★</div>
-            <div style={{background:"linear-gradient(135deg,#FFDF00,#FFB800,#cc8800)",color:"#0a0f00",borderRadius:10,padding:"13px 20px",fontWeight:900,fontSize:14,boxShadow:"0 0 28px rgba(255,223,0,.45)",border:"2px solid rgba(255,255,255,.25)",whiteSpace:"nowrap"}}>
-              🏆 {champ} 
+            <div style={{background:"linear-gradient(135deg,#FFDF00,#FFB800,#cc8800)",color:"#0a0f00",borderRadius:10,padding:"13px 18px",fontWeight:900,fontSize:14,boxShadow:"0 0 28px rgba(255,223,0,.45)",border:"2px solid rgba(255,255,255,.25)",whiteSpace:"nowrap",textAlign:"center"}}>
+              🏆 {champ}
             </div>
             <div style={{fontSize:12,color:"rgba(255,223,0,.35)"}}>★ ★ ★ ★ ★</div>
           </div>
@@ -452,11 +554,139 @@ function BulkModal({ onAdd, onClose }) {
   );
 }
 
+
+// ─── GERADOR DE CHAVES UI ────────────────────────────────────────────────────
+function GeradorChave({ mod, onSalvar, onClose }) {
+  const [raw,setRaw]=useState("");
+  const [gender,setGender]=useState("masculino");
+  const [randomize,setRandomize]=useState(true);
+  const [rounds,setRounds]=useState(null);
+  const players=raw.split("\n").map(s=>s.trim()).filter(Boolean);
+  const gc=gender==="masculino"?M_COLOR:F_COLOR;
+
+  const gerar=()=>{ if(players.length<2)return; setRounds(gerarChave(players,randomize,mod.name)); };
+  const salvar=()=>{
+    if(!rounds) return;
+    onSalvar(gender, rounds);
+    onClose();
+  };
+
+  return (
+    <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,.85)",zIndex:400,display:"flex",alignItems:"stretch",justifyContent:"center"}}>
+      <div style={{background:"#0a0f00",border:"2px solid rgba(255,223,0,.2)",borderRadius:0,width:"100%",maxWidth:1100,display:"flex",flexDirection:"column",maxHeight:"100vh",overflow:"hidden"}}>
+
+        {/* Header modal */}
+        <div style={{display:"flex",alignItems:"center",gap:12,padding:"14px 20px",borderBottom:"2px solid rgba(255,223,0,.15)",flexShrink:0}}>
+          <span style={{fontSize:22}}>{mod.emoji}</span>
+          <div style={{fontFamily:"'Bebas Neue',cursive",fontSize:20,letterSpacing:3,color:MGOLD}}>GERADOR DE CHAVES · {mod.name}</div>
+          <button onClick={onClose} style={{marginLeft:"auto",background:"none",border:"none",color:"rgba(255,255,255,.4)",fontSize:22,cursor:"pointer"}}>✕</button>
+        </div>
+
+        <div style={{display:"flex",flex:1,overflow:"hidden"}}>
+          {/* Painel esquerdo — configuração */}
+          <div style={{width:280,flexShrink:0,borderRight:"1px solid rgba(255,255,255,.07)",padding:20,overflowY:"auto",background:"rgba(255,255,255,.02)"}}>
+            <div style={{fontSize:10,color:"rgba(255,255,255,.35)",letterSpacing:3,textTransform:"uppercase",marginBottom:16}}>Configurar Chave</div>
+
+            {/* Categoria */}
+            <div style={{marginBottom:14}}>
+              <div style={{color:"rgba(255,255,255,.35)",fontSize:10,letterSpacing:1,textTransform:"uppercase",marginBottom:6}}>Categoria</div>
+              <div style={{display:"flex",borderRadius:7,overflow:"hidden",border:"2px solid rgba(255,255,255,.1)"}}>
+                {["masculino","feminino"].map(g=>(
+                  <button key={g} onClick={()=>{setGender(g);setRounds(null);}} style={{flex:1,padding:"8px 0",border:"none",cursor:"pointer",background:gender===g?(g==="masculino"?M_COLOR:F_COLOR):"transparent",color:gender===g?"#fff":"rgba(255,255,255,.35)",fontWeight:800,fontSize:11,letterSpacing:1,textTransform:"uppercase",fontFamily:"'Inter',sans-serif",transition:"all .2s"}}>
+                    {g==="masculino"?"♂ Masc":"♀ Fem"}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Atletas */}
+            <div style={{marginBottom:14}}>
+              <div style={{color:"rgba(255,255,255,.35)",fontSize:10,letterSpacing:1,textTransform:"uppercase",marginBottom:6}}>
+                Atletas — um por linha <span style={{color:gc,fontWeight:700}}>({players.length})</span>
+              </div>
+              <textarea value={raw} onChange={e=>setRaw(e.target.value)} rows={12}
+                placeholder={"João Silva\nPedro Santos\nLucas Oliveira\nGabriel Costa"}
+                style={{width:"100%",background:"rgba(255,255,255,.05)",border:`1px solid ${gc}33`,borderRadius:6,padding:"9px 11px",color:"#e2e8f0",fontSize:12,outline:"none",fontFamily:"'Inter',sans-serif",resize:"vertical",boxSizing:"border-box",lineHeight:1.7}}/>
+            </div>
+
+            {/* Sorteio */}
+            <div style={{marginBottom:16}}>
+              <label style={{display:"flex",alignItems:"center",gap:10,cursor:"pointer",padding:"10px 12px",background:"rgba(255,255,255,.03)",borderRadius:6,border:"1px solid rgba(255,255,255,.07)"}}>
+                <div onClick={()=>setRandomize(!randomize)} style={{width:38,height:21,borderRadius:11,background:randomize?"#009C3B":"rgba(255,255,255,.12)",cursor:"pointer",position:"relative",transition:"background .2s",flexShrink:0}}>
+                  <div style={{position:"absolute",top:2,left:randomize?17:2,width:17,height:17,borderRadius:"50%",background:"#fff",transition:"left .2s",boxShadow:"0 1px 3px rgba(0,0,0,.4)"}}/>
+                </div>
+                <div>
+                  <div style={{fontSize:12,fontWeight:600}}>Sorteio aleatório</div>
+                  <div style={{fontSize:10,color:"rgba(255,255,255,.28)",marginTop:1}}>Embaralha os atletas</div>
+                </div>
+              </label>
+            </div>
+
+            {/* Info estrutura */}
+            {players.length>=2&&(
+              <div style={{padding:"10px 12px",background:`${gc}12`,border:`1px solid ${gc}28`,borderRadius:6,marginBottom:14,fontSize:11}}>
+                <div style={{color:gc,fontWeight:700,marginBottom:4}}>📐 Estrutura</div>
+                <div style={{color:"rgba(255,255,255,.45)"}}>{players.length} atletas → {nextPow2(players.length)} vagas</div>
+                <div style={{color:"rgba(255,255,255,.45)"}}>{nextPow2(players.length)-players.length} BYE(s) automáticos</div>
+                <div style={{color:"rgba(255,255,255,.45)"}}>{Math.log2(nextPow2(players.length))} fases até o campeão</div>
+              </div>
+            )}
+
+            <button onClick={gerar} disabled={players.length<2}
+              style={{width:"100%",background:players.length>=2?`linear-gradient(135deg,${gc},${gc}bb)`:"rgba(255,255,255,.07)",color:players.length>=2?"#fff":"rgba(255,255,255,.2)",border:"none",borderRadius:8,padding:"12px",fontWeight:900,fontSize:13,cursor:players.length>=2?"pointer":"not-allowed",fontFamily:"'Inter',sans-serif",letterSpacing:1,transition:"all .2s",boxShadow:players.length>=2?`0 4px 18px ${gc}44`:"none",marginBottom:8}}>
+              ⚡ GERAR CHAVE
+            </button>
+
+            {rounds&&(
+              <>
+                <button onClick={()=>setRounds(gerarChave(players,randomize,mod.name))}
+                  style={{width:"100%",background:"transparent",border:`1px solid ${gc}44`,color:gc,borderRadius:8,padding:"9px",fontWeight:700,fontSize:12,cursor:"pointer",fontFamily:"'Inter',sans-serif",letterSpacing:1,marginBottom:8}}>
+                  🎲 Novo sorteio
+                </button>
+                <button onClick={salvar}
+                  style={{width:"100%",background:"linear-gradient(135deg,#FFDF00,#FFB800)",color:"#0a0f00",border:"none",borderRadius:8,padding:"12px",fontWeight:900,fontSize:13,cursor:"pointer",fontFamily:"'Inter',sans-serif",letterSpacing:1,boxShadow:"0 4px 18px rgba(255,223,0,.3)"}}>
+                  💾 SALVAR NO SITE
+                </button>
+              </>
+            )}
+          </div>
+
+          {/* Painel direito — visualização */}
+          <div style={{flex:1,padding:24,overflowX:"auto",overflowY:"auto"}}>
+            {!rounds?(
+              <div style={{display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",height:"100%",gap:14,opacity:.35}}>
+                <div style={{fontSize:56}}>🏆</div>
+                <div style={{fontFamily:"'Bebas Neue',cursive",fontSize:22,letterSpacing:4,color:MGOLD}}>CONFIGURE E GERE A CHAVE</div>
+                <div style={{color:"rgba(255,255,255,.3)",fontSize:12}}>Adicione os atletas e clique em Gerar</div>
+              </div>
+            ):(
+              <div>
+                <div style={{marginBottom:20}}>
+                  <div style={{fontFamily:"'Bebas Neue',cursive",fontSize:24,color:MGOLD,letterSpacing:4,lineHeight:1}}>{mod.name}</div>
+                  <div style={{display:"flex",gap:8,marginTop:6,alignItems:"center"}}>
+                    <div style={{background:gc,borderRadius:4,padding:"3px 10px",fontSize:11,fontWeight:800,color:"#fff"}}>{gender==="masculino"?"♂ Masculino":"♀ Feminino"}</div>
+                    <div style={{color:"rgba(255,255,255,.3)",fontSize:11}}>{players.length} atletas · {rounds.length} fases</div>
+                  </div>
+                </div>
+                <Bracket rounds={rounds} gc={gc} canEdit={false} onWin={()=>{}} onEdit={()=>{}} onAddMatch={()=>{}} onRename={()=>{}} onAddRound={()=>{}} onRemoveRound={()=>{}}/>
+                <div style={{marginTop:20,padding:"12px 16px",background:"rgba(0,156,59,.08)",border:"1px solid rgba(0,156,59,.2)",borderRadius:8,fontSize:11,color:"rgba(255,255,255,.4)"}}>
+                  💡 Clique em <strong style={{color:MGOLD}}>Salvar no Site</strong> para confirmar esta chave. Depois você pode lançar os resultados normalmente pelo chaveamento.
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ─── MODALITY PAGE ────────────────────────────────────────────────────────────
 function ModalityPage({ mod, onChange, canEdit, isMobile }) {
   const [gender,setGender]=useState("masculino");
   const [editMatch,setEditMatch]=useState(null);
   const [showBulk,setShowBulk]=useState(false);
+  const [showGerador,setShowGerador]=useState(false);
   const gc  = gender==="masculino"?M_COLOR:F_COLOR;
   const gbg = gender==="masculino"?M_BG:F_BG;
   const gData = mod.genders[gender];
@@ -468,6 +698,9 @@ function ModalityPage({ mod, onChange, canEdit, isMobile }) {
   const handleRename =(rid,name)=>upd(gData.rounds.map(r=>r.id===rid?{...r,name}:r));
   const handleAddR   =()=>upd([...gData.rounds,mkRound("Nova Fase")]);
   const handleRemoveR=(rid)=>{if(gData.rounds.length<=1)return;upd(gData.rounds.filter(r=>r.id!==rid));};
+  const handleSalvarGerador=(g, newRounds)=>{
+    onChange({...mod,genders:{...mod.genders,[g]:{rounds:newRounds}}});
+  };
   const handleBulk   =(players)=>{
     const ms=[];for(let i=0;i<players.length;i+=2)ms.push(mkMatch(players[i]||null,players[i+1]||null));
     const fid=gData.rounds[0]?.id;
@@ -493,7 +726,12 @@ function ModalityPage({ mod, onChange, canEdit, isMobile }) {
           <div style={{display:"flex",alignItems:"center",gap:8}}>
             <span style={{fontSize:9,color:MGOLD,letterSpacing:3}}>★ ★ ★ ★ ★</span>
             <BRFlag size={20}/>
-            {canEdit&&<button onClick={()=>setShowBulk(true)} style={{background:gc,color:"#0a0f00",border:"none",borderRadius:6,padding:"6px 12px",fontWeight:700,fontSize:11,cursor:"pointer",fontFamily:"'Inter',sans-serif"}}>+ Jogadores</button>}
+            {canEdit&&(
+              <div style={{display:"flex",gap:6}}>
+                <button onClick={()=>setShowGerador(true)} style={{background:"linear-gradient(135deg,#FFDF00,#FFB800)",color:"#0a0f00",border:"none",borderRadius:6,padding:"6px 12px",fontWeight:800,fontSize:11,cursor:"pointer",fontFamily:"'Inter',sans-serif",boxShadow:"0 2px 10px rgba(255,223,0,.3)"}}>⚡ Gerar Chave</button>
+                <button onClick={()=>setShowBulk(true)} style={{background:"rgba(255,255,255,.08)",color:"#e2e8f0",border:"1px solid rgba(255,255,255,.15)",borderRadius:6,padding:"6px 12px",fontWeight:700,fontSize:11,cursor:"pointer",fontFamily:"'Inter',sans-serif"}}>+ Jogadores</button>
+              </div>
+            )}
           </div>
         </div>
         <div style={{display:"flex",marginTop:16,width:"fit-content",borderRadius:8,overflow:"hidden",border:"2px solid rgba(255,255,255,.1)"}}>
@@ -510,6 +748,7 @@ function ModalityPage({ mod, onChange, canEdit, isMobile }) {
       </div>
       {editMatch&&<EditModal match={editMatch} onSave={handleSave} onRemove={handleRemove} onClose={()=>setEditMatch(null)}/>}
       {showBulk&&<BulkModal onAdd={handleBulk} onClose={()=>setShowBulk(false)}/>}
+      {showGerador&&<GeradorChave mod={mod} onSalvar={handleSalvarGerador} onClose={()=>setShowGerador(false)}/>}
     </div>
   );
 }
