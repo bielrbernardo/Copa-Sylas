@@ -7,6 +7,7 @@ const USERS = [
 ];
 
 // ─── CONSTANTES ───────────────────────────────────────────────────────────────
+// Bandeiras via SVG inline do flagicons.lipis.org (sem CORS, sem bloqueio)
 const FLAGS = [
   {code:"BR",br:true},{code:"AR"},{code:"FR"},{code:"DE"},{code:"PT"},
   {code:"IT"},{code:"ES"},{code:"UY"},{code:"JP"},{code:"KR"},
@@ -61,6 +62,7 @@ function gerarChave(players, randomize, modName) {
   const list = randomize ? shuffleArr(players) : [...players];
   const size = nextPow2(list.length);
   while(list.length<size) list.push("BYE");
+  const roundNames = ["Final","Final","Semifinal","Quartas de Final","Oitavas","1ª Fase","2ª Fase","3ª Fase"];
   const rounds = [];
   const firstMatches = [];
   for(let i=0;i<list.length;i+=2){
@@ -85,7 +87,9 @@ function gerarChave(players, randomize, modName) {
 
 // ─── FIREBASE + LOCALSTORAGE FALLBACK ────────────────────────────────────────
 function saveData(d) {
+  // Salva localmente como cache
   try { localStorage.setItem("copa26_v6", JSON.stringify(d)); } catch(e) {}
+  // Salva no Firebase
   if (window._fbSet) {
     window._fbSet(d).catch(e => console.warn("Firebase save error:", e));
   }
@@ -122,6 +126,28 @@ INITIAL.mods[0].genders.fund_fem.rounds = [
   {id:"tf2",name:"Semifinal",matches:[{id:"f5",p1:null,p2:null,winner:null},{id:"f6",p1:null,p2:null,winner:null}]},
   {id:"tf3",name:"Final",matches:[{id:"f7",p1:null,p2:null,winner:null}]},
 ];
+
+// Futsal — Round Robin (todos contra todos) 7 rodadas
+const FUTSAL_TEAMS = ["6ºA","6ºB","7ºA","8ºA","9ºA","1ºA","2ºA","3ºA"];
+const FUTSAL_ROUNDS = [
+  {name:"1ª Rodada", matches:[["6ºA","6ºB"],["7ºA","8ºA"],["9ºA","1ºA"],["3ºA","2ºA"]]},
+  {name:"2ª Rodada", matches:[["6ºA","8ºA"],["6ºB","1ºA"],["7ºA","2ºA"],["9ºA","3ºA"]]},
+  {name:"3ª Rodada", matches:[["6ºA","1ºA"],["8ºA","2ºA"],["6ºB","3ºA"],["7ºA","9ºA"]]},
+  {name:"4ª Rodada", matches:[["6ºA","2ºA"],["1ºA","3ºA"],["8ºA","9ºA"],["6ºB","7ºA"]]},
+  {name:"5ª Rodada", matches:[["6ºA","3ºA"],["2ºA","9ºA"],["1ºA","7ºA"],["8ºA","6ºB"]]},
+  {name:"6ª Rodada", matches:[["6ºA","9ºA"],["3ºA","7ºA"],["2ºA","6ºB"],["1ºA","8ºA"]]},
+  {name:"7ª Rodada", matches:[["6ºA","7ºA"],["9ºA","6ºB"],["3ºA","8ºA"],["2ºA","1ºA"]]},
+];
+// Índice do futsal = 4
+INITIAL.mods[4].genders.misto = {
+  tipo:"roundrobin",
+  teams: FUTSAL_TEAMS,
+  rounds: FUTSAL_ROUNDS.map(r=>({
+    id:uid(), name:r.name,
+    matches:r.matches.map(([p1,p2])=>({id:uid(),p1,p2,winner:null,gols1:null,gols2:null}))
+  })),
+  classificacao: FUTSAL_TEAMS.map(t=>({time:t,j:0,v:0,e:0,d:0,gp:0,gc:0,pts:0})),
+};
 
 // ─── SVG DECO ─────────────────────────────────────────────────────────────────
 function DecoSVG({ id, gc }) {
@@ -168,6 +194,7 @@ function DecoSVG({ id, gc }) {
   return null;
 }
 
+// ─── BANDEIRA BR (imagem real, sem emoji) ─────────────────────────────────────
 function BRFlag({ size=24, style={} }) {
   return (
     <img
@@ -178,8 +205,9 @@ function BRFlag({ size=24, style={} }) {
     />
   );
 }
-
+// ─── FLAG STRIP ───────────────────────────────────────────────────────────────
 function FlagStrip({ rev, speed=20, h=44 }) {
+  // Faixa reversa tem ordem embaralhada para parecer diferente da de cima
   const fwd=[...FLAGS,...FLAGS,...FLAGS,...FLAGS];
   const bwd=[...FLAGS].reverse().concat([...FLAGS].reverse()).concat([...FLAGS].reverse()).concat([...FLAGS].reverse());
   const all = rev ? bwd : fwd;
@@ -212,6 +240,7 @@ function FlagStrip({ rev, speed=20, h=44 }) {
   );
 }
 
+// ─── LOGIN ────────────────────────────────────────────────────────────────────
 function Login({ onLogin }) {
   const [u,setU]=useState(""); const [p,setP]=useState(""); const [err,setErr]=useState(""); const [show,setShow]=useState(false);
   const go=()=>{ const f=USERS.find(x=>x.user===u&&x.pass===p); f?onLogin(f):setErr("Usuário ou senha incorretos."); };
@@ -251,6 +280,7 @@ function Login({ onLogin }) {
   );
 }
 
+// ─── SIDEBAR ──────────────────────────────────────────────────────────────────
 function Sidebar({ mods, page, onNav, isOpen, isMobile, user, onLogout, collapsed }) {
   const items=[{id:"home",label:"Início",emoji:"🏠"},...mods.map(m=>({id:m.id,label:m.name,emoji:m.emoji})),...(user?.role==="admin"?[{id:"admin",label:"Admin",emoji:"⚙️"}]:[])];
   const W = isMobile ? 260 : (collapsed ? 56 : 220);
@@ -260,6 +290,7 @@ function Sidebar({ mods, page, onNav, isOpen, isMobile, user, onLogout, collapse
         transform:isMobile?(isOpen?"translateX(0)":"translateX(-100%)"):"none",
         transition:isMobile?"transform .25s":"width .25s cubic-bezier(.4,0,.2,1)"}}>
 
+      {/* Cabeçalho sidebar — só quando expandida */}
       {(!collapsed||isMobile)&&(
         <div style={{padding:"14px 12px 12px",borderBottom:"1px solid rgba(255,223,0,.1)",flexShrink:0}}>
           <div style={{display:"flex",alignItems:"center",gap:8}}>
@@ -272,6 +303,7 @@ function Sidebar({ mods, page, onNav, isOpen, isMobile, user, onLogout, collapse
         </div>
       )}
 
+      {/* Links */}
       <nav style={{padding:collapsed&&!isMobile?"10px 4px":"10px 7px",flex:1,overflowY:"auto"}}>
         {items.map(item=>{
           const mod=mods.find(m=>m.id===item.id);
@@ -294,6 +326,7 @@ function Sidebar({ mods, page, onNav, isOpen, isMobile, user, onLogout, collapse
         })}
       </nav>
 
+      {/* Rodapé */}
       {(!collapsed||isMobile)&&(
         <div style={{padding:"11px 13px",borderTop:"1px solid rgba(255,223,0,.08)",flexShrink:0}}>
           <div style={{fontSize:11,color:"rgba(255,255,255,.3)",marginBottom:6}}>
@@ -310,6 +343,7 @@ function Sidebar({ mods, page, onNav, isOpen, isMobile, user, onLogout, collapse
   );
 }
 
+// ─── HOME ─────────────────────────────────────────────────────────────────────
 function Home({ mods, onNav, isMobile }) {
   return (
     <div>
@@ -377,6 +411,27 @@ function Home({ mods, onNav, isMobile }) {
   );
 }
 
+// ─── MATCH CARD ───────────────────────────────────────────────────────────────
+function MatchCard({ match, gc, canEdit, onWin, onEdit }) {
+  return (
+    <div style={{background:"rgba(255,255,255,.04)",border:`1px solid ${match.winner?"rgba(255,223,0,.2)":"rgba(255,255,255,.08)"}`,borderRadius:8,overflow:"hidden",minWidth:185,position:"relative",opacity:(!match.p1&&!match.p2)?.38:1}}>
+      {canEdit&&<button onClick={()=>onEdit(match)} style={{position:"absolute",top:3,right:3,background:"none",border:"none",color:"rgba(255,255,255,.25)",cursor:"pointer",fontSize:11,zIndex:1}}>✏️</button>}
+      {[match.p1,match.p2].map((n,pi)=>(
+        <div key={pi} className="mrow" onClick={()=>canEdit&&n&&n!=="BYE"&&onWin(match.id,n)}
+          style={{borderBottom:pi===0?"1px solid rgba(255,255,255,.06)":"none",background:match.winner===n?`${gc}28`:"transparent",cursor:canEdit&&n&&n!=="BYE"?"pointer":"default",color:match.winner===n?gc:n?"#e2e8f0":"rgba(255,255,255,.2)",fontWeight:match.winner===n?800:400}}>
+          {match.winner===n&&<span style={{fontSize:10,color:gc}}>✓</span>}
+          <span>{n||"—"}</span>
+          {n==="BYE"&&<span style={{fontSize:9,color:"#64748b",marginLeft:"auto"}}>bye</span>}
+        </div>
+      ))}
+    </div>
+  );
+}
+
+// ─── BRACKET COM LINHAS SVG ──────────────────────────────────────────────────
+const CARD_H=74, CARD_W=188, H_GAP=36, V_GAP=10;
+function getMatchY(ri,mi){ const f=Math.pow(2,ri); return (f-1)*(CARD_H+V_GAP)/2+mi*f*(CARD_H+V_GAP); }
+
 function Bracket({ rounds, gc, canEdit, onWin, onEdit, onAddMatch, onRename, onAddRound, onRemoveRound, onMoveRound }) {
   const champ=rounds[rounds.length-1]?.matches[0]?.winner;
   const totalH=Math.pow(2,rounds.length-1)*(CARD_H+V_GAP)+80;
@@ -384,6 +439,8 @@ function Bracket({ rounds, gc, canEdit, onWin, onEdit, onAddMatch, onRename, onA
   return (
     <div style={{overflowX:"auto",overflowY:"hidden",paddingBottom:24}}>
       <div style={{position:"relative",width:totalW,height:totalH}}>
+
+        {/* SVG linhas conectoras */}
         <svg style={{position:"absolute",inset:0,width:"100%",height:"100%",pointerEvents:"none",overflow:"visible"}}>
           {rounds.map((round,ri)=>{
             if(ri===rounds.length-1) return null;
@@ -410,8 +467,10 @@ function Bracket({ rounds, gc, canEdit, onWin, onEdit, onAddMatch, onRename, onA
           })}
         </svg>
 
+        {/* Cards */}
         {rounds.map((round,ri)=>(
           <div key={round.id}>
+            {/* Label fase + botões mover */}
             <div style={{position:"absolute",left:ri*(CARD_W+H_GAP),top:0,width:CARD_W,display:"flex",alignItems:"center",justifyContent:"center",gap:3}}>
               {canEdit&&ri>0&&(
                 <button onClick={()=>onMoveRound(round.id,"left")} title="Mover para esquerda"
@@ -439,6 +498,7 @@ function Bracket({ rounds, gc, canEdit, onWin, onEdit, onAddMatch, onRename, onA
                   border:`1px solid ${match.winner?gc+"55":"rgba(255,255,255,.1)"}`,
                   borderRadius:8,overflow:"hidden",opacity:isEmpty?.3:1,
                   boxShadow:match.winner?`0 0 14px ${gc}22`:"none"}}>
+                  {/* ✏️ em TODOS os cards quando canEdit, inclusive vazios */}
                   {canEdit&&<button onClick={()=>onEdit(match)}
                     style={{position:"absolute",top:3,right:3,background:"rgba(0,0,0,.3)",border:"none",color:"rgba(255,255,255,.5)",cursor:"pointer",fontSize:10,zIndex:1,borderRadius:3,padding:"1px 4px"}}>✏️</button>}
                   {[match.p1,match.p2].map((n,pi)=>(
@@ -466,12 +526,14 @@ function Bracket({ rounds, gc, canEdit, onWin, onEdit, onAddMatch, onRename, onA
           </div>
         ))}
 
+        {/* + Nova Fase */}
         {canEdit&&(
           <div style={{position:"absolute",left:rounds.length*(CARD_W+H_GAP)+4,top:getMatchY(0,0)+24}}>
             <button onClick={onAddRound} style={{background:"transparent",border:"1px dashed rgba(255,223,0,.28)",borderRadius:8,padding:"12px 9px",color:"rgba(255,223,0,.45)",fontSize:10,cursor:"pointer",fontFamily:"'Inter',sans-serif",writingMode:"vertical-rl"}}>+ Fase</button>
           </div>
         )}
 
+        {/* Campeão */}
         {champ&&(
           <div style={{position:"absolute",left:rounds.length*(CARD_W+H_GAP)+(canEdit?52:8),top:getMatchY(rounds.length-1,0)+24,display:"flex",flexDirection:"column",alignItems:"center",gap:6}}>
             <div style={{fontSize:9,fontWeight:800,letterSpacing:3,color:MGOLD}}>★ CAMPEÃO ★</div>
@@ -486,6 +548,7 @@ function Bracket({ rounds, gc, canEdit, onWin, onEdit, onAddMatch, onRename, onA
   );
 }
 
+// ─── MODALS ───────────────────────────────────────────────────────────────────
 function EditModal({ match, onSave, onRemove, onClose }) {
   const [p1,setP1]=useState(match.p1||""); const [p2,setP2]=useState(match.p2||"");
   return (
@@ -537,9 +600,11 @@ function BulkModal({ onAdd, onClose }) {
   );
 }
 
+
+// ─── GERADOR DE CHAVES UI ────────────────────────────────────────────────────
 function GeradorChave({ mod, onSalvar, onClose, defaultCat, isNivel }) {
   const [raw,setRaw]=useState("");
-  const [cat,setCat]=useState(defaultCat||"fund_masc");
+  const [cat,setCat]=useState(defaultCat||"masculino");
   const [randomize,setRandomize]=useState(true);
   const [rounds,setRounds]=useState(null);
   const players=raw.split("\n").map(s=>s.trim()).filter(Boolean);
@@ -556,6 +621,8 @@ function GeradorChave({ mod, onSalvar, onClose, defaultCat, isNivel }) {
   return (
     <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,.85)",zIndex:400,display:"flex",alignItems:"stretch",justifyContent:"center"}}>
       <div style={{background:"#0a0f00",border:"2px solid rgba(255,223,0,.2)",borderRadius:0,width:"100%",maxWidth:1100,display:"flex",flexDirection:"column",maxHeight:"100vh",overflow:"hidden"}}>
+
+        {/* Header modal */}
         <div style={{display:"flex",alignItems:"center",gap:12,padding:"14px 20px",borderBottom:"2px solid rgba(255,223,0,.15)",flexShrink:0}}>
           <span style={{fontSize:22}}>{mod.emoji}</span>
           <div style={{fontFamily:"'Bebas Neue',cursive",fontSize:20,letterSpacing:3,color:MGOLD}}>GERADOR DE CHAVES · {mod.name}</div>
@@ -563,9 +630,11 @@ function GeradorChave({ mod, onSalvar, onClose, defaultCat, isNivel }) {
         </div>
 
         <div style={{display:"flex",flex:1,overflow:"hidden"}}>
+          {/* Painel esquerdo — configuração */}
           <div style={{width:280,flexShrink:0,borderRight:"1px solid rgba(255,255,255,.07)",padding:20,overflowY:"auto",background:"rgba(255,255,255,.02)"}}>
             <div style={{fontSize:10,color:"rgba(255,255,255,.35)",letterSpacing:3,textTransform:"uppercase",marginBottom:16}}>Configurar Chave</div>
 
+            {/* Categoria */}
             <div style={{marginBottom:14}}>
               <div style={{color:"rgba(255,255,255,.35)",fontSize:10,letterSpacing:1,textTransform:"uppercase",marginBottom:6}}>Categoria</div>
               <div style={{display:"flex",borderRadius:7,overflow:"hidden",border:"2px solid rgba(255,255,255,.1)",flexWrap:"wrap"}}>
@@ -582,6 +651,7 @@ function GeradorChave({ mod, onSalvar, onClose, defaultCat, isNivel }) {
               </div>
             </div>
 
+            {/* Atletas */}
             <div style={{marginBottom:14}}>
               <div style={{color:"rgba(255,255,255,.35)",fontSize:10,letterSpacing:1,textTransform:"uppercase",marginBottom:6}}>
                 Atletas — um por linha <span style={{color:gc,fontWeight:700}}>({players.length})</span>
@@ -591,6 +661,7 @@ function GeradorChave({ mod, onSalvar, onClose, defaultCat, isNivel }) {
                 style={{width:"100%",background:"rgba(255,255,255,.05)",border:`1px solid ${gc}33`,borderRadius:6,padding:"9px 11px",color:"#e2e8f0",fontSize:12,outline:"none",fontFamily:"'Inter',sans-serif",resize:"vertical",boxSizing:"border-box",lineHeight:1.7}}/>
             </div>
 
+            {/* Sorteio */}
             <div style={{marginBottom:16}}>
               <label style={{display:"flex",alignItems:"center",gap:10,cursor:"pointer",padding:"10px 12px",background:"rgba(255,255,255,.03)",borderRadius:6,border:"1px solid rgba(255,255,255,.07)"}}>
                 <div onClick={()=>setRandomize(!randomize)} style={{width:38,height:21,borderRadius:11,background:randomize?"#009C3B":"rgba(255,255,255,.12)",cursor:"pointer",position:"relative",transition:"background .2s",flexShrink:0}}>
@@ -603,6 +674,7 @@ function GeradorChave({ mod, onSalvar, onClose, defaultCat, isNivel }) {
               </label>
             </div>
 
+            {/* Info estrutura */}
             {players.length>=2&&(
               <div style={{padding:"10px 12px",background:`${gc}12`,border:`1px solid ${gc}28`,borderRadius:6,marginBottom:14,fontSize:11}}>
                 <div style={{color:gc,fontWeight:700,marginBottom:4}}>📐 {curT.label}</div>
@@ -631,6 +703,7 @@ function GeradorChave({ mod, onSalvar, onClose, defaultCat, isNivel }) {
             )}
           </div>
 
+          {/* Painel direito — visualização */}
           <div style={{flex:1,padding:24,overflowX:"auto",overflowY:"auto"}}>
             {!rounds?(
               <div style={{display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",height:"100%",gap:14,opacity:.35}}>
@@ -643,7 +716,7 @@ function GeradorChave({ mod, onSalvar, onClose, defaultCat, isNivel }) {
                 <div style={{marginBottom:20}}>
                   <div style={{fontFamily:"'Bebas Neue',cursive",fontSize:24,color:MGOLD,letterSpacing:4,lineHeight:1}}>{mod.name}</div>
                   <div style={{display:"flex",gap:8,marginTop:6,alignItems:"center"}}>
-                    <div style={{background:gc,borderRadius:4,padding:"3px 10px",fontSize:11,fontWeight:800,color:"#fff"}}>{cat.includes("masc")?"♂ Masculino":"♀ Feminino"}</div>
+                    <div style={{background:gc,borderRadius:4,padding:"3px 10px",fontSize:11,fontWeight:800,color:"#fff"}}>{gender==="masculino"?"♂ Masculino":"♀ Feminino"}</div>
                     <div style={{color:"rgba(255,255,255,.3)",fontSize:11}}>{players.length} atletas · {rounds.length} fases</div>
                   </div>
                 </div>
@@ -660,6 +733,8 @@ function GeradorChave({ mod, onSalvar, onClose, defaultCat, isNivel }) {
   );
 }
 
+// ─── MODALITY PAGE ────────────────────────────────────────────────────────────
+// Labels e cores por categoria
 const NIVEL_TABS = [
   {key:"fund_masc", label:"📚 Fund. Masc", short:"F.Masc", gc:M_COLOR,  gbg:M_BG},
   {key:"fund_fem",  label:"📚 Fund. Fem",  short:"F.Fem",  gc:F_COLOR,  gbg:F_BG},
@@ -667,12 +742,162 @@ const NIVEL_TABS = [
   {key:"em_fem",    label:"🎓 EM Fem",     short:"EM.F",   gc:"#a855f7", gbg:"linear-gradient(160deg,#1a0028,#280038,#0a0f00)"},
 ];
 
-const CARD_H=74, CARD_W=188, H_GAP=36, V_GAP=10;
-function getMatchY(ri,mi){ const f=Math.pow(2,ri); return (f-1)*(CARD_H+V_GAP)/2+mi*f*(CARD_H+V_GAP); }
+// Migra genders antigos (masculino/feminino) para novo formato
+// ─── ROUND ROBIN (TODOS CONTRA TODOS) ────────────────────────────────────────
+function calcClassificacao(teams, rounds) {
+  const table = {};
+  teams.forEach(t => table[t]={time:t,j:0,v:0,e:0,d:0,gp:0,gc:0,pts:0});
+  rounds.forEach(r => r.matches.forEach(m => {
+    if(m.gols1===null||m.gols2===null) return;
+    const g1=parseInt(m.gols1)||0, g2=parseInt(m.gols2)||0;
+    if(!table[m.p1]||!table[m.p2]) return;
+    table[m.p1].j++; table[m.p2].j++;
+    table[m.p1].gp+=g1; table[m.p1].gc+=g2;
+    table[m.p2].gp+=g2; table[m.p2].gc+=g1;
+    if(g1>g2){table[m.p1].v++;table[m.p1].pts+=3;table[m.p2].d++;}
+    else if(g2>g1){table[m.p2].v++;table[m.p2].pts+=3;table[m.p1].d++;}
+    else{table[m.p1].e++;table[m.p1].pts++;table[m.p2].e++;table[m.p2].pts++;}
+  }));
+  return Object.values(table).sort((a,b)=>b.pts-a.pts||(b.gp-b.gc)-(a.gp-a.gc)||b.gp-a.gp);
+}
+
+function RoundRobin({ gData, gc, canEdit, onChange }) {
+  const [rodada, setRodada] = useState(0);
+  const [editGols, setEditGols] = useState(null); // {matchId, rid}
+  const [g1,setG1] = useState(""); const [g2,setG2] = useState("");
+
+  const rounds = gData.rounds || [];
+  const teams  = gData.teams  || [];
+  const class_ = calcClassificacao(teams, rounds);
+
+  const saveGols = () => {
+    const newRounds = rounds.map(r => r.id===editGols.rid
+      ? {...r, matches:r.matches.map(m => m.id===editGols.matchId
+          ? {...m, gols1:g1, gols2:g2, winner: parseInt(g1)>parseInt(g2)?m.p1:parseInt(g2)>parseInt(g1)?m.p2:"empate"}
+          : m)}
+      : r);
+    onChange({...gData, rounds:newRounds});
+    setEditGols(null); setG1(""); setG2("");
+  };
+
+  const curRound = rounds[rodada];
+
+  return (
+    <div style={{padding:"16px 0"}}>
+      {/* Tabs rodadas */}
+      <div style={{display:"flex",overflowX:"auto",gap:4,marginBottom:20,paddingBottom:4}}>
+        {rounds.map((r,i)=>(
+          <button key={r.id} onClick={()=>setRodada(i)} style={{
+            flexShrink:0, padding:"7px 14px", borderRadius:6, border:`1px solid ${i===rodada?gc:"rgba(255,255,255,.1)"}`,
+            background:i===rodada?`${gc}22`:"transparent",
+            color:i===rodada?gc:"rgba(255,255,255,.4)",
+            fontWeight:i===rodada?700:400, fontSize:11, cursor:"pointer",
+            fontFamily:"'Inter',sans-serif", letterSpacing:1,
+          }}>{r.name}</button>
+        ))}
+      </div>
+
+      {/* Jogos da rodada */}
+      {curRound && (
+        <div style={{marginBottom:24}}>
+          <div style={{fontSize:10,fontWeight:800,letterSpacing:3,color:gc,textTransform:"uppercase",marginBottom:10,padding:"3px 10px",background:`${gc}12`,borderRadius:4,display:"inline-block"}}>{curRound.name}</div>
+          <div style={{display:"flex",flexDirection:"column",gap:8}}>
+            {curRound.matches.map(m=>{
+              const done = m.gols1!==null && m.gols2!==null;
+              return (
+                <div key={m.id} style={{display:"flex",alignItems:"center",gap:10,padding:"12px 16px",background:"rgba(255,255,255,.04)",border:`1px solid ${done?"rgba(255,223,0,.2)":"rgba(255,255,255,.08)"}`,borderRadius:8}}>
+                  {/* Time 1 */}
+                  <span style={{flex:1,textAlign:"right",fontWeight:done&&m.winner===m.p1?800:400,color:done&&m.winner===m.p1?gc:"#e2e8f0",fontSize:13}}>{m.p1}</span>
+                  {/* Placar */}
+                  <div style={{display:"flex",alignItems:"center",gap:6,flexShrink:0}}>
+                    {done ? (
+                      <div style={{display:"flex",alignItems:"center",gap:4}}>
+                        <span style={{fontFamily:"'Bebas Neue',cursive",fontSize:22,color:MGOLD,minWidth:20,textAlign:"center"}}>{m.gols1}</span>
+                        <span style={{color:"rgba(255,255,255,.3)",fontSize:14}}>×</span>
+                        <span style={{fontFamily:"'Bebas Neue',cursive",fontSize:22,color:MGOLD,minWidth:20,textAlign:"center"}}>{m.gols2}</span>
+                      </div>
+                    ) : (
+                      <span style={{color:"rgba(255,255,255,.2)",fontSize:12,padding:"2px 10px",border:"1px solid rgba(255,255,255,.1)",borderRadius:4}}>× × ×</span>
+                    )}
+                  </div>
+                  {/* Time 2 */}
+                  <span style={{flex:1,fontWeight:done&&m.winner===m.p2?800:400,color:done&&m.winner===m.p2?gc:"#e2e8f0",fontSize:13}}>{m.p2}</span>
+                  {/* Botão editar */}
+                  {canEdit&&(
+                    <button onClick={()=>{setEditGols({matchId:m.id,rid:curRound.id});setG1(m.gols1??"");setG2(m.gols2??"");}}
+                      style={{background:`${gc}22`,border:`1px solid ${gc}44`,borderRadius:5,padding:"4px 10px",color:gc,fontSize:11,cursor:"pointer",fontWeight:700,flexShrink:0}}>
+                      {done?"✏️":"+ Gols"}
+                    </button>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      {/* Tabela de classificação */}
+      <div>
+        <div style={{fontSize:10,fontWeight:800,letterSpacing:3,color:MGOLD,textTransform:"uppercase",marginBottom:10,padding:"3px 10px",background:"rgba(255,223,0,.08)",borderRadius:4,display:"inline-block"}}>🏆 Classificação</div>
+        <div style={{background:"rgba(255,255,255,.02)",borderRadius:10,overflow:"hidden",border:"1px solid rgba(255,255,255,.07)"}}>
+          <div style={{display:"grid",gridTemplateColumns:"32px 1fr 32px 32px 32px 32px 40px 40px 40px",padding:"8px 12px",background:"rgba(255,255,255,.05)",fontSize:9,letterSpacing:2,color:"rgba(255,255,255,.35)",textTransform:"uppercase",gap:4}}>
+            <span>#</span><span>Time</span><span style={{textAlign:"center"}}>J</span><span style={{textAlign:"center"}}>V</span><span style={{textAlign:"center"}}>E</span><span style={{textAlign:"center"}}>D</span><span style={{textAlign:"center"}}>GP</span><span style={{textAlign:"center"}}>GC</span><span style={{textAlign:"center",fontWeight:800,color:MGOLD}}>PTS</span>
+          </div>
+          {class_.map((t,i)=>(
+            <div key={t.time} style={{display:"grid",gridTemplateColumns:"32px 1fr 32px 32px 32px 32px 40px 40px 40px",padding:"10px 12px",borderTop:"1px solid rgba(255,255,255,.04)",background:i===0?"rgba(255,223,0,.05)":i<3?"rgba(255,255,255,.02)":"transparent",gap:4,alignItems:"center"}}>
+              <span style={{fontFamily:"'Bebas Neue',cursive",fontSize:18,color:i===0?MGOLD:i===1?"#94a3b8":i===2?"#cd7f32":"rgba(255,255,255,.3)",textAlign:"center"}}>
+                {i===0?"🥇":i===1?"🥈":i===2?"🥉":i+1}
+              </span>
+              <span style={{fontWeight:i===0?800:400,fontSize:13,color:i===0?MGOLD:"#e2e8f0"}}>{t.time}</span>
+              {[t.j,t.v,t.e,t.d,t.gp,t.gc].map((v,vi)=>(
+                <span key={vi} style={{textAlign:"center",fontSize:12,color:"rgba(255,255,255,.5)"}}>{v}</span>
+              ))}
+              <span style={{textAlign:"center",fontWeight:800,fontSize:15,color:i===0?MGOLD:"rgba(255,255,255,.7)"}}>{t.pts}</span>
+            </div>
+          ))}
+        </div>
+        <div style={{marginTop:8,fontSize:10,color:"rgba(255,255,255,.2)",letterSpacing:1}}>V=Vitória · E=Empate · D=Derrota · GP=Gols Pró · GC=Gols Contra · PTS=Pontos</div>
+      </div>
+
+      {/* Modal lançar gols */}
+      {editGols&&(
+        <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,.8)",zIndex:400,display:"flex",alignItems:"center",justifyContent:"center",padding:16}}>
+          <div style={{background:"#0d1a05",border:`2px solid ${gc}44`,borderRadius:14,padding:28,width:"100%",maxWidth:360}}>
+            <div style={{fontFamily:"'Bebas Neue',cursive",fontSize:20,letterSpacing:3,color:MGOLD,marginBottom:20}}>⚽ LANÇAR RESULTADO</div>
+            {(()=>{
+              const m = rounds.find(r=>r.id===editGols.rid)?.matches.find(m=>m.id===editGols.matchId);
+              return m?(
+                <div>
+                  <div style={{display:"flex",alignItems:"center",gap:12,marginBottom:20}}>
+                    <span style={{flex:1,textAlign:"right",fontWeight:700,fontSize:14}}>{m.p1}</span>
+                    <div style={{display:"flex",alignItems:"center",gap:8}}>
+                      <input value={g1} onChange={e=>setG1(e.target.value.replace(/\D/g,""))} placeholder="0"
+                        style={{width:52,background:"rgba(255,255,255,.08)",border:`2px solid ${gc}55`,borderRadius:8,padding:"10px 0",color:MGOLD,fontSize:22,fontFamily:"'Bebas Neue',cursive",textAlign:"center",outline:"none"}}/>
+                      <span style={{color:"rgba(255,255,255,.3)",fontSize:18,fontWeight:700}}>×</span>
+                      <input value={g2} onChange={e=>setG2(e.target.value.replace(/\D/g,""))} placeholder="0"
+                        style={{width:52,background:"rgba(255,255,255,.08)",border:`2px solid ${gc}55`,borderRadius:8,padding:"10px 0",color:MGOLD,fontSize:22,fontFamily:"'Bebas Neue',cursive",textAlign:"center",outline:"none"}}/>
+                    </div>
+                    <span style={{flex:1,fontWeight:700,fontSize:14}}>{m.p2}</span>
+                  </div>
+                  <div style={{display:"flex",gap:8,justifyContent:"flex-end"}}>
+                    <button onClick={()=>{setEditGols(null);setG1("");setG2("");}} style={{background:"transparent",border:"1px solid rgba(255,255,255,.2)",color:"rgba(255,255,255,.4)",borderRadius:6,padding:"8px 16px",fontSize:12,cursor:"pointer"}}>Cancelar</button>
+                    <button onClick={saveGols} style={{background:`linear-gradient(135deg,${gc},${gc}bb)`,color:"#fff",border:"none",borderRadius:6,padding:"8px 20px",fontWeight:700,fontSize:12,cursor:"pointer"}}>✓ Salvar</button>
+                  </div>
+                </div>
+              ):null;
+            })()}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 
 function migrarGenders(mod) {
   if(mod.tipo==="nivel") {
     const g = mod.genders||{};
+    // Se ainda tem formato antigo, migra
     if(g.masculino && !g.fund_masc) {
       return { ...mod, genders:{
         fund_masc: g.masculino,
@@ -681,6 +906,7 @@ function migrarGenders(mod) {
         em_fem:    g.em_fem   || {rounds:[mkRound("Semifinal"),mkRound("Final")]},
       }};
     }
+    // Garantir que todas as 4 categorias existem
     return { ...mod, genders:{
       fund_masc: g.fund_masc || {rounds:[mkRound("Semifinal"),mkRound("Final")]},
       fund_fem:  g.fund_fem  || {rounds:[mkRound("Semifinal"),mkRound("Final")]},
@@ -691,6 +917,7 @@ function migrarGenders(mod) {
   if(mod.tipo==="misto") {
     const g = mod.genders||{};
     if(!g.misto) {
+      // Pega o primeiro gender disponível como misto
       const first = g.masculino || g.misto || {rounds:[mkRound("Semifinal"),mkRound("Final")]};
       return { ...mod, genders:{ misto: first }};
     }
@@ -708,6 +935,7 @@ function ModalityPage({ mod: modRaw, onChange, canEdit, isMobile }) {
   const [showBulk,setShowBulk]=useState(false);
   const [showGerador,setShowGerador]=useState(false);
 
+  // Cor e bg da aba atual
   const curNivel = isNivel ? NIVEL_TABS.find(t=>t.key===catTab) : null;
   const gc  = isNivel ? (curNivel?.gc||M_COLOR) : mod.accent;
   const gbg = isNivel ? (curNivel?.gbg||M_BG) : "linear-gradient(160deg,#0a1628,#0d2137,#0a0f00)";
@@ -766,6 +994,7 @@ function ModalityPage({ mod: modRaw, onChange, canEdit, isMobile }) {
             )}
           </div>
         </div>
+        {/* Tabs dinâmicas */}
         <div style={{display:"flex",marginTop:16,gap:6,flexWrap:"wrap",alignItems:"center"}}>
           <div style={{display:"flex",borderRadius:8,overflow:"hidden",border:"2px solid rgba(255,255,255,.1)"}}>
             {isNivel ? NIVEL_TABS.map(t=>(
@@ -794,6 +1023,7 @@ function ModalityPage({ mod: modRaw, onChange, canEdit, isMobile }) {
         </div>
       </div>
 
+      {/* ABA CAMPEÃO */}
       {subTab==="campeao" && (
         <div style={{background:"linear-gradient(135deg,#0a0f00,#0d1a05)",minHeight:300,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",padding:"48px 24px",gap:32}}>
           <div style={{fontFamily:"'Bebas Neue',cursive",fontSize:22,letterSpacing:5,color:"rgba(255,255,255,.2)"}}>CAMPEÕES DA {mod.name.toUpperCase()}</div>
@@ -828,12 +1058,26 @@ function ModalityPage({ mod: modRaw, onChange, canEdit, isMobile }) {
         </div>
       )}
 
+      {/* ABA CHAVE / ROUND ROBIN */}
       {subTab!=="campeao" && (
         <div>
-          {canEdit&&<div style={{margin:"10px 20px 0",fontSize:11,color:"rgba(255,223,0,.45)",padding:"5px 11px",background:"rgba(255,223,0,.04)",border:"1px solid rgba(255,223,0,.09)",borderRadius:6,display:"inline-block"}}>✏️ Clique no jogador para avançar · ✏️ no card para editar · ◀▶ para reordenar fases</div>}
-          <div style={{background:gbg,minHeight:300,padding:isMobile?"14px":"20px 22px 44px"}}>
-            <Bracket rounds={gData.rounds} gc={gc} canEdit={canEdit} onWin={handleWin} onEdit={setEditMatch} onAddMatch={handleAddM} onRename={handleRename} onAddRound={handleAddR} onRemoveRound={handleRemoveR} onMoveRound={handleMoveR}/>
-          </div>
+          {gData.tipo==="roundrobin" ? (
+            <div style={{background:gbg,minHeight:300,padding:isMobile?"14px":"20px 24px 44px"}}>
+              <RoundRobin
+                gData={gData}
+                gc={gc}
+                canEdit={canEdit}
+                onChange={(newGData)=>onChange({...mod,genders:{...mod.genders,[catTab]:newGData}})}
+              />
+            </div>
+          ) : (
+            <div>
+              {canEdit&&<div style={{margin:"10px 20px 0",fontSize:11,color:"rgba(255,223,0,.45)",padding:"5px 11px",background:"rgba(255,223,0,.04)",border:"1px solid rgba(255,223,0,.09)",borderRadius:6,display:"inline-block"}}>✏️ Clique no jogador para avançar · ✏️ no card para editar · ◀▶ para reordenar fases</div>}
+              <div style={{background:gbg,minHeight:300,padding:isMobile?"14px":"20px 22px 44px"}}>
+                <Bracket rounds={gData.rounds} gc={gc} canEdit={canEdit} onWin={handleWin} onEdit={setEditMatch} onAddMatch={handleAddM} onRename={handleRename} onAddRound={handleAddR} onRemoveRound={handleRemoveR} onMoveRound={handleMoveR}/>
+              </div>
+            </div>
+          )}
         </div>
       )}
       {editMatch&&<EditModal match={editMatch} onSave={handleSave} onRemove={handleRemove} onClose={()=>setEditMatch(null)}/>}
@@ -843,19 +1087,21 @@ function ModalityPage({ mod: modRaw, onChange, canEdit, isMobile }) {
   );
 }
 
+// ─── ADMIN ────────────────────────────────────────────────────────────────────
 function Admin({ data, setData }) {
   const [newMod,setNewMod]=useState("");
-  const add=()=>{ if(!newMod.trim())return; const nd={...data,mods:[...data.mods,{id:uid(),name:newMod.trim(),emoji:"🏅",accent:"#FFDF00",ativo:false,genders:{fund_masc:mkNivel(),fund_fem:mkNivel(),em_masc:mkNivel(),em_fem:mkNivel()}}]}; setData(nd);saveData(nd);setNewMod(""); };
-  const remove=(id)=>{ if(!window.confirm("Remover modalidade?"))return; const nd={...data,mods:data.mods.filter(m=>m.id!==id)}; setData(nd);saveData(nd); };
-  const reset=()=>{ if(!window.confirm("Zerar todos os dados?"))return; setData(INITIAL);saveData(INITIAL); };
+  const add=()=>{ if(!newMod.trim())return; const nd={...data,mods:[...data.mods,{id:uid(),name:newMod.trim(),emoji:"🏅",accent:"#FFDF00",ativo:false,genders:{masculino:mkGender("novo"),feminino:mkGender("novo")}}]}; setData(nd);if(window._fbSet)window._fbSet(nd);setNewMod(""); };
+  const remove=(id)=>{ if(!window.confirm("Remover modalidade?"))return; const nd={...data,mods:data.mods.filter(m=>m.id!==id)}; setData(nd);if(window._fbSet)window._fbSet(nd); };
+  const reset=()=>{ if(!window.confirm("Zerar todos os dados?"))return; setData(INITIAL);if(window._fbSet)window._fbSet(INITIAL); };
   const toggleAtivo=(id)=>{
     const nd={...data,mods:data.mods.map(m=>m.id===id?{...m,ativo:!m.ativo}:m)};
-    setData(nd);saveData(nd);
+    setData(nd);if(window._fbSet)window._fbSet(nd);
   };
   return (
     <div style={{padding:24,maxWidth:"100%"}}>
       <div style={{fontFamily:"'Bebas Neue',cursive",fontSize:26,color:MGOLD,letterSpacing:3,marginBottom:20}}>⚙️ PAINEL ADMIN</div>
 
+      {/* CONTROLE DO PLACAR PÚBLICO */}
       <div style={{background:"rgba(255,255,255,.03)",border:"1px solid rgba(255,223,0,.15)",borderRadius:10,padding:18,marginBottom:14}}>
         <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:4}}>
           <span style={{fontSize:16}}>📺</span>
@@ -874,6 +1120,7 @@ function Admin({ data, setData }) {
                 ? <span style={{fontSize:10,color:MGREEN,background:"rgba(0,156,59,.15)",border:"1px solid rgba(0,156,59,.3)",borderRadius:4,padding:"2px 8px",letterSpacing:1}}>● AO VIVO</span>
                 : <span style={{fontSize:10,color:"rgba(255,255,255,.25)",background:"rgba(255,255,255,.04)",border:"1px solid rgba(255,255,255,.1)",borderRadius:4,padding:"2px 8px",letterSpacing:1}}>🔒 EM BREVE</span>
               }
+              {/* Toggle switch */}
               <div onClick={()=>toggleAtivo(m.id)} style={{width:44,height:24,borderRadius:12,background:isOn?"#009C3B":"rgba(255,255,255,.12)",cursor:"pointer",position:"relative",transition:"background .25s",flexShrink:0}}>
                 <div style={{position:"absolute",top:3,left:isOn?20:3,width:18,height:18,borderRadius:"50%",background:"#fff",transition:"left .25s",boxShadow:"0 1px 4px rgba(0,0,0,.4)"}}/>
               </div>
@@ -885,6 +1132,7 @@ function Admin({ data, setData }) {
         </div>
       </div>
 
+      {/* MODALIDADES */}
       <div style={{background:"rgba(255,255,255,.03)",border:"1px solid rgba(255,255,255,.08)",borderRadius:10,padding:18,marginBottom:14}}>
         <div style={{color:"rgba(255,255,255,.3)",fontSize:10,letterSpacing:3,textTransform:"uppercase",marginBottom:12}}>Gerenciar Modalidades</div>
         {data.mods.map(m=>(
@@ -909,26 +1157,30 @@ function Admin({ data, setData }) {
   );
 }
 
+// ─── APP PRINCIPAL ────────────────────────────────────────────────────────────
 function App() {
   const [user,setUser]=useState(null);
   const [page,setPage]=useState("home");
-  const [data,setData]=useState(()=>loadData()||INITIAL);
+  const [data,setData]=useState(null); // null = aguardando Firebase
   const [toast,setToast]=useState(null);
   const [sideOpen,setSideOpen]=useState(false);
   const [collapsed,setCollapsed]=useState(false);
   const [isMobile,setIsMobile]=useState(false);
   const [fbReady,setFbReady]=useState(false);
 
+  // Listener Firebase — ÚNICA fonte de verdade
   useEffect(()=>{
     const tryListen = () => {
       if(window._fbListen) {
         window._fbListen((fbData)=>{
           if(fbData && fbData.mods) {
+            // Firebase tem dados — usa sempre esses
             setData(fbData);
-            try { localStorage.setItem("copa26_v6", JSON.stringify(fbData)); } catch(e) {}
-          } else if(!fbData) {
-            const local = loadData() || INITIAL;
-            window._fbSet(local);
+          } else {
+            // Firebase vazio — sobe o INITIAL
+            const ini = INITIAL;
+            setData(ini);
+            if(window._fbSet) window._fbSet(ini);
           }
           setFbReady(true);
         });
@@ -950,10 +1202,31 @@ function App() {
   },[]);
 
   const showToast=(msg)=>{setToast(msg);setTimeout(()=>setToast(null),2500);};
-  const handleChange=(updated)=>{ const nd={...data,mods:data.mods.map(m=>m.id===updated.id?updated:m)}; setData(nd);saveData(nd);showToast("Salvo ✓"); };
+  const handleChange=(updated)=>{
+    const nd={...data,mods:data.mods.map(m=>m.id===updated.id?updated:m)};
+    setData(nd);
+    // Salva APENAS no Firebase — ele é a fonte da verdade
+    if(window._fbSet) window._fbSet(nd).catch(e=>console.warn("Firebase:",e));
+    showToast("Salvo ✓");
+  };
   const navTo=(id)=>{setPage(id);if(isMobile)setSideOpen(false);};
 
   if(!user) return <Login onLogin={setUser}/>;
+
+  // Aguarda Firebase carregar os dados reais
+  if(!data) return (
+    <div style={{minHeight:"100vh",background:"#0a0f00",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:16,fontFamily:"'Inter',sans-serif"}}>
+      <div style={{fontSize:52,animation:"floatUp 1.5s ease-in-out infinite"}}>🏆</div>
+      <div style={{fontFamily:"'Bebas Neue',cursive",fontSize:24,letterSpacing:4,color:MGOLD}}>COPA SYLAS 2026</div>
+      <div style={{display:"flex",gap:6}}>
+        {[0,1,2].map(i=>(
+          <div key={i} style={{width:8,height:8,borderRadius:"50%",background:MGOLD,animation:`pulse 1s ${i*.2}s ease-in-out infinite`}}/>
+        ))}
+      </div>
+      <div style={{fontSize:11,color:"rgba(255,255,255,.25)",letterSpacing:2}}>Conectando ao Firebase...</div>
+      <style>{`@keyframes pulse{0%,100%{opacity:.2;transform:scale(.8)}50%{opacity:1;transform:scale(1)}}`}</style>
+    </div>
+  );
 
   const isAdmin=user.role==="admin";
   const canEdit=isAdmin||user.role==="editor";
@@ -994,7 +1267,7 @@ function App() {
         <main className="main-scroll">
           <div className="main-inner">
             {page==="home"&&<Home mods={data.mods} onNav={navTo} isMobile={isMobile}/>}
-            {page==="admin"&&isAdmin&&<Admin data={data} setData={d=>{setData(d);saveData(d);}}/>}
+            {page==="admin"&&isAdmin&&<Admin data={data} setData={d=>{setData(d);if(window._fbSet)window._fbSet(d);}}/>}
             {curMod&&<ModalityPage key={page} mod={curMod} onChange={handleChange} canEdit={canEdit} isMobile={isMobile}/>}
           </div>
         </main>
