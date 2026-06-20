@@ -748,8 +748,12 @@ function calcClassificacao(teams, rounds) {
   const table = {};
   teams.forEach(t => table[t]={time:t,j:0,v:0,e:0,d:0,gp:0,gc:0,pts:0});
   rounds.forEach(r => r.matches.forEach(m => {
-    if(m.gols1===null||m.gols2===null) return;
-    const g1=parseInt(m.gols1)||0, g2=parseInt(m.gols2)||0;
+    // Ignora partidas sem placar (null, undefined, string vazia ou "null")
+    const v1 = m.gols1; const v2 = m.gols2;
+    if(v1===null||v1===undefined||v1===""||v1==="null") return;
+    if(v2===null||v2===undefined||v2===""||v2==="null") return;
+    const g1=parseInt(v1), g2=parseInt(v2);
+    if(isNaN(g1)||isNaN(g2)) return;
     if(!table[m.p1]||!table[m.p2]) return;
     table[m.p1].j++; table[m.p2].j++;
     table[m.p1].gp+=g1; table[m.p1].gc+=g2;
