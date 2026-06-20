@@ -112,20 +112,89 @@ const INITIAL = { mods: MODS_META.map(m => {
   }};
   return { ...m, genders:{ misto:mkMisto() }};
 })};
+// ─── CHAVE CORRETA: 20 jogadores, play-in + quartas, 0 BYEs ──────────────────
+// Play-in: 8 jogam → 4 vagas | 12 entram direto nas quartas
+const TM_PLAYERS = ["Christopher","José","Paulo","João Pedro","Vitor","Ruan",
+  "Jullio","Eduardo","Pedro V.","Leonardo A.","Luiz H.","Gustavo",
+  "Endrew","Pietro","Marcelo","Davi","Leonardo D.","Arthur","Hector","Marcos"];
+// Play-in: primeiros 8
+const TM_PLAYIN  = TM_PLAYERS.slice(0,8);
+// Direto nas quartas: os outros 12
+const TM_DIRETO  = TM_PLAYERS.slice(8);
+// Quartas: intercalar 12 diretos com 4 vagas do play-in
+const TM_Q = [];
+let di=0,pi=0;
+for(let i=0;i<16;i++){
+  if((i+1)%4===0&&pi<4){TM_Q.push(null);pi++;}
+  else{TM_Q.push(TM_DIRETO[di]||null);di++;}
+}
 INITIAL.mods[0].genders.fund_masc.rounds = [
-  {id:"voga8zt",name:"Play-in",matches:[{id:"6vkw8ty",p1:"Christopher",p2:"José",winner:null},{id:"y5jzlqh",p1:"Paulo",p2:"João Pedro",winner:null},{id:"76pew7g",p1:"Vitor",p2:"Ruan",winner:null},{id:"1hm0708",p1:"Jullio",p2:"Eduardo",winner:null}]},
-  {id:"mqm0524",name:"Quartas de Final",matches:[{id:"slz3uvv",p1:"Pedro V.",p2:"Leonardo A.",winner:null},{id:"7q3uvxt",p1:"Luiz H.",p2:null,winner:null},{id:"ucxx5ir",p1:"Gustavo",p2:"Endrew",winner:null},{id:"xcc4bar",p1:"Pietro",p2:null,winner:null},{id:"4sij69d",p1:"Marcelo",p2:"Davi",winner:null},{id:"5s7890y",p1:"Leonardo D.",p2:null,winner:null},{id:"svfu8xh",p1:"Arthur",p2:"Hector",winner:null},{id:"d7yp98b",p1:"Marcos",p2:null,winner:null}]},
-  {id:"63c8e6q",name:"Semifinal",matches:[{id:"nqs6h4x",p1:null,p2:null,winner:null},{id:"kcsws97",p1:null,p2:null,winner:null}]},
-  {id:"ly9dauk",name:"Final",matches:[{id:"srjjyb5",p1:null,p2:null,winner:null}]},
+  {id:"tm_playin", name:"Play-in", matches:[
+    {id:"tp1",p1:TM_PLAYIN[0],p2:TM_PLAYIN[1],winner:null},
+    {id:"tp2",p1:TM_PLAYIN[2],p2:TM_PLAYIN[3],winner:null},
+    {id:"tp3",p1:TM_PLAYIN[4],p2:TM_PLAYIN[5],winner:null},
+    {id:"tp4",p1:TM_PLAYIN[6],p2:TM_PLAYIN[7],winner:null},
+  ]},
+  {id:"tm_quartas", name:"Quartas de Final", matches:[
+    {id:"tq1",p1:TM_Q[0], p2:TM_Q[1], winner:null},
+    {id:"tq2",p1:TM_Q[2], p2:TM_Q[3], winner:null},
+    {id:"tq3",p1:TM_Q[4], p2:TM_Q[5], winner:null},
+    {id:"tq4",p1:TM_Q[6], p2:TM_Q[7], winner:null},
+    {id:"tq5",p1:TM_Q[8], p2:TM_Q[9], winner:null},
+    {id:"tq6",p1:TM_Q[10],p2:TM_Q[11],winner:null},
+    {id:"tq7",p1:TM_Q[12],p2:TM_Q[13],winner:null},
+    {id:"tq8",p1:TM_Q[14],p2:TM_Q[15],winner:null},
+  ]},
+  {id:"tm_semi", name:"Semifinal", matches:[
+    {id:"ts1",p1:null,p2:null,winner:null},
+    {id:"ts2",p1:null,p2:null,winner:null},
+  ]},
+  {id:"tm_final", name:"Final", matches:[
+    {id:"tf_m",p1:null,p2:null,winner:null},
+  ]},
 ];
 INITIAL.mods[0].genders.fund_fem.rounds = [
   {id:"tf1",name:"Quartas de Final",matches:[
-    {id:"f1",p1:"Ana Bella",p2:"Vitória",winner:null},{id:"f2",p1:"Thifany",p2:"BYE",winner:"Thifany"},
-    {id:"f3",p1:"Milena",p2:"Maria Cecília",winner:null},{id:"f4",p1:"Maria Vitória",p2:"BYE",winner:"Maria Vitória"},
+    {id:"f1",p1:"Ana Bella",   p2:"Vitória",      winner:null},
+    {id:"f2",p1:"Thifany",     p2:"BYE",          winner:"Thifany"},
+    {id:"f3",p1:"Milena",      p2:"Maria Cecília", winner:null},
+    {id:"f4",p1:"Maria Vitória",p2:"BYE",         winner:"Maria Vitória"},
   ]},
   {id:"tf2",name:"Semifinal",matches:[{id:"f5",p1:null,p2:null,winner:null},{id:"f6",p1:null,p2:null,winner:null}]},
-  {id:"tf3",name:"Final",matches:[{id:"f7",p1:null,p2:null,winner:null}]},
+  {id:"tf3",name:"Final",    matches:[{id:"f7",p1:null,p2:null,winner:null}]},
 ];
+
+// Função para resetar só resultados (mantém jogadores e estrutura)
+function resetarResultados(data) {
+  return {
+    ...data,
+    mods: data.mods.map(mod => ({
+      ...mod,
+      genders: Object.fromEntries(
+        Object.entries(mod.genders).map(([gKey, gVal]) => {
+          if(gVal.tipo==="roundrobin") {
+            return [gKey, {
+              ...gVal,
+              rounds: gVal.rounds.map(r=>({
+                ...r,
+                matches: r.matches.map(m=>({...m,winner:null,gols1:null,gols2:null}))
+              }))
+            }];
+          }
+          return [gKey, {
+            ...gVal,
+            rounds: gVal.rounds.map(r=>({
+              ...r,
+              matches: r.matches.map(m=>({...m,winner:null}))
+            }))
+          }];
+        })
+      )
+    }))
+  };
+}
+
+
 
 // Futsal — Round Robin (todos contra todos) 7 rodadas
 const FUTSAL_TEAMS = ["6ºA","6ºB","7ºA","8ºA","9ºA","1ºA","2ºA","3ºA"];
@@ -1096,7 +1165,12 @@ function Admin({ data, setData }) {
   const [newMod,setNewMod]=useState("");
   const add=()=>{ if(!newMod.trim())return; const nd={...data,mods:[...data.mods,{id:uid(),name:newMod.trim(),emoji:"🏅",accent:"#FFDF00",ativo:false,genders:{masculino:mkGender("novo"),feminino:mkGender("novo")}}]}; setData(nd);if(window._fbSet)window._fbSet(nd);setNewMod(""); };
   const remove=(id)=>{ if(!window.confirm("Remover modalidade?"))return; const nd={...data,mods:data.mods.filter(m=>m.id!==id)}; setData(nd);if(window._fbSet)window._fbSet(nd); };
-  const reset=()=>{ if(!window.confirm("Zerar todos os dados?"))return; setData(INITIAL);if(window._fbSet)window._fbSet(INITIAL); };
+  const reset=()=>{ if(!window.confirm("Zerar TUDO? Apaga jogadores e resultados e volta ao estado inicial."))return; setData(INITIAL);if(window._fbSet)window._fbSet(INITIAL); };
+  const resetResultados=()=>{
+    if(!window.confirm("Apagar só os resultados? Os nomes dos jogadores e a estrutura das chaves são mantidos."))return;
+    const nd=resetarResultados(data);
+    setData(nd);if(window._fbSet)window._fbSet(nd);
+  };
   const toggleAtivo=(id)=>{
     const nd={...data,mods:data.mods.map(m=>m.id===id?{...m,ativo:!m.ativo}:m)};
     setData(nd);if(window._fbSet)window._fbSet(nd);
@@ -1153,9 +1227,21 @@ function Admin({ data, setData }) {
       </div>
 
       <div style={{background:"rgba(239,68,68,.05)",border:"1px solid rgba(239,68,68,.18)",borderRadius:10,padding:16}}>
-        <div style={{color:"#ef4444",fontSize:11,fontWeight:800,letterSpacing:2,marginBottom:7}}>⚠ ZONA DE PERIGO</div>
-        <p style={{color:"rgba(255,255,255,.28)",fontSize:12,marginBottom:10}}>Apaga todos os resultados e restaura os dados iniciais.</p>
-        <button onClick={reset} style={{background:"#ef4444",color:"#fff",border:"none",borderRadius:6,padding:"8px 18px",fontWeight:700,fontSize:12,cursor:"pointer"}}>🔄 Resetar todos os dados</button>
+        <div style={{color:"#ef4444",fontSize:11,fontWeight:800,letterSpacing:2,marginBottom:12}}>⚠ ZONA DE PERIGO</div>
+
+        {/* Reset só resultados */}
+        <div style={{marginBottom:14,padding:"12px 14px",background:"rgba(255,150,0,.06)",border:"1px solid rgba(255,150,0,.2)",borderRadius:8}}>
+          <div style={{color:"#fb923c",fontSize:12,fontWeight:700,marginBottom:4}}>🔄 Resetar só os resultados</div>
+          <p style={{color:"rgba(255,255,255,.3)",fontSize:11,marginBottom:10}}>Apaga gols e vencedores mas <strong style={{color:"rgba(255,255,255,.6)"}}>mantém os nomes dos jogadores</strong> e a estrutura das chaves.</p>
+          <button onClick={resetResultados} style={{background:"#fb923c",color:"#fff",border:"none",borderRadius:6,padding:"8px 18px",fontWeight:700,fontSize:12,cursor:"pointer"}}>🔄 Resetar Resultados</button>
+        </div>
+
+        {/* Reset completo */}
+        <div>
+          <div style={{color:"#ef4444",fontSize:12,fontWeight:700,marginBottom:4}}>💣 Resetar TUDO</div>
+          <p style={{color:"rgba(255,255,255,.28)",fontSize:11,marginBottom:10}}>Apaga jogadores, resultados e volta ao estado inicial do código.</p>
+          <button onClick={reset} style={{background:"#ef4444",color:"#fff",border:"none",borderRadius:6,padding:"8px 18px",fontWeight:700,fontSize:12,cursor:"pointer"}}>💣 Resetar Tudo</button>
+        </div>
       </div>
     </div>
   );
