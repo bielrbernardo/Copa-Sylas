@@ -11,11 +11,13 @@
 </head>
 <body>
   <div id="root"></div>
+
+  <!-- Bibliotecas SPA (React & Babel) via CDN -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.2/babel.min.js"></script>
 
-  <!-- Firebase SDK via compat (sem module, sem problema de ordem) -->
+  <!-- Firebase SDK via Compat (Garante estabilidade e ordem de carregamento) -->
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
   <script>
@@ -30,13 +32,16 @@
     });
     const _db = firebase.database();
     const _ref = _db.ref("copa_sylas");
-    // Disponível imediatamente para o app.js
+    
+    // Funções de persistência globais para o app.js
     window._fbSet    = (data) => _ref.set(data);
     window._fbListen = (cb)   => _ref.on("value", snap => cb(snap.val()));
     window._fbOff    = ()     => _ref.off();
     console.log("✅ Firebase pronto");
   </script>
 
+  <!-- Módulos do Sistema: Dados carregam ANTES da lógica do App -->
+  <script src="dados.js"></script>
   <script type="text/babel" src="app.js" data-type="module"></script>
 </body>
 </html>
