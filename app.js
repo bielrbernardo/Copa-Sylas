@@ -11,18 +11,16 @@ const INITIAL = window.INITIAL;
 function propagate(rounds) {
   const r = rounds.map(rn=>({...rn, matches:rn.matches.map(m=>({...m}))}));
   for(let ri=0;ri<r.length-1;ri++) {
-    const cur=r[ri].matches, nxt=r[ri+1].matches;
-    for(let mi=0;mi<cur.length;mi+=2) {
-      const slot=Math.floor(mi/2);
-      if(slot<nxt.length) {
-        if(cur.length < nxt.length) {
-          const targetSlot=mi*2;
-          if(nxt[targetSlot]) nxt[targetSlot].p1=cur[mi]?.winner??nxt[targetSlot].p1;
-          if(nxt[targetSlot+2]) nxt[targetSlot+2].p1=cur[mi+1]?.winner??nxt[targetSlot+2].p1;
-          break;
-        }
-        nxt[slot]={...nxt[slot],p1:cur[mi]?.winner??nxt[slot].p1,p2:cur[mi+1]?.winner??nxt[slot].p2};
-      }
+    const cur=r[ri].matches;
+    const nxt=r[ri+1].matches;
+    for(let mi=0;mi<cur.length;mi++) {
+      if(!cur[mi].winner) continue;
+      const slot = Math.floor(mi/2);
+      if(slot >= nxt.length) continue;
+      // Par (0,2,4...): p1 do slot destino
+      // Ímpar (1,3,5...): p2 do slot destino
+      if(mi%2===0) nxt[slot].p1 = cur[mi].winner;
+      else         nxt[slot].p2 = cur[mi].winner;
     }
   }
   return r;
