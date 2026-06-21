@@ -66,7 +66,11 @@ function ModalityPage({ mod: modRaw, onChange, canEdit, isMobile }) {
   const gData = mod.genders[catTab] || {rounds:[window.mkRound("Semifinal"),window.mkRound("Final")]};
 
   const upd=(newRounds)=>onChange({...modRaw,...mod,genders:{...mod.genders,[catTab]:{...gData,rounds:window.propagate(newRounds)}}});
-  const handleWin    =(mid,w)=>upd(gData.rounds.map(r=>({...r,matches:r.matches.map(m=>m.id===mid?{...m,winner:w}:m)})));
+  const handleWin=(mid,w)=>upd(gData.rounds.map(r=>({...r,matches:r.matches.map(m=>{
+    if(m.id!==mid) return m;
+    // Card com p2=null (Fase Inicial): só marca winner sem exigir p2
+    return {...m, winner:w};
+  })})));
   const handleSave   =(mid,p1,p2)=>upd(gData.rounds.map(r=>({...r,matches:r.matches.map(m=>m.id===mid?{...m,p1,p2,winner:null}:m)})));
   const handleRemove =(mid)=>upd(gData.rounds.map(r=>({...r,matches:r.matches.filter(m=>m.id!==mid)})));
   const handleAddM   =(rid)=>upd(gData.rounds.map(r=>r.id===rid?{...r,matches:[...r.matches,window.mkMatch()]}:r));
