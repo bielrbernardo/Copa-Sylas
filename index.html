@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Copa Sylas 2026</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🏆</text></svg>"/>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;600;700;800;900&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="style.css"/>
+</head>
+<body>
+  <div id="root"></div>
+
+  <!-- React + Babel -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.2/babel.min.js"></script>
+
+  <!-- Firebase Compat SDK (carrega ANTES do app para garantir window._fbSet disponível) -->
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+  <script>
+    firebase.initializeApp({
+      apiKey: "AIzaSyDRXpdtmXzGDDg523t8MUvgVdJy2PG-Yf4",
+      authDomain: "copa-sylas.firebaseapp.com",
+      databaseURL: "https://copa-sylas-default-rtdb.firebaseio.com",
+      projectId: "copa-sylas",
+      storageBucket: "copa-sylas.firebasestorage.app",
+      messagingSenderId: "1028431178200",
+      appId: "1:1028431178200:web:e97f9b0a4dc638e7bc6aad"
+    });
+    const _ref = firebase.database().ref("copa_sylas");
+    window._fbSet    = (data) => _ref.set(data);
+    window._fbListen = (cb)   => _ref.on("value", snap => cb(snap.val()));
+    window._fbOff    = ()     => _ref.off();
+    console.log("✅ Firebase pronto");
+  </script>
+
+  <!--
+    ORDEM DE CARREGAMENTO — IMPORTANTE!
+    Cada arquivo depende do anterior.
+    dados.js    → define INITIAL, USERS, FLAGS, helpers
+    ui.js       → BRFlag, FlagStrip, DecoSVG, Login, Sidebar, Home
+    bracket.js  → MatchCard, Bracket, EditModal, BulkModal, GeradorChave
+    roundrobin.js → calcClassificacao, RoundRobin
+    modality.js → NIVEL_TABS, migrarGenders, ModalityPage
+    app.js      → propagate, Admin, App (ponto de entrada)
+  -->
+  <script src="dados.js"></script>
+  <script type="text/babel" src="ui.js"          data-type="module"></script>
+  <script type="text/babel" src="bracket.js"     data-type="module"></script>
+  <script type="text/babel" src="roundrobin.js"  data-type="module"></script>
+  <script type="text/babel" src="modality.js"    data-type="module"></script>
+  <script type="text/babel" src="app.js"         data-type="module"></script>
+</body>
+</html>
