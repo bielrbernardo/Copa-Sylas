@@ -125,38 +125,36 @@ function BracketView({ rounds, gc }) {
   const totalH = maxMatches * (CARD_H + V_GAP) + 80;
   const totalW = rounds.length * (CARD_W + H_GAP) + (champ ? 220 : 40);
 
+  // Gera linhas SVG fora do JSX para evitar problema com arrays aninhados
+  const svgLines = [];
+  rounds.forEach((round,ri)=>{
+    if(ri===rounds.length-1) return;
+    const isPlayIn = round.matches.length < rounds[ri+1].matches.length;
+    round.matches.forEach((match,mi)=>{
+      const x1=ri*(CARD_W+H_GAP)+CARD_W;
+      const y1=getMatchY(ri,mi,rounds)+CARD_H/2+24;
+      const nmi=isPlayIn?mi*2:Math.floor(mi/2);
+      const x2=(ri+1)*(CARD_W+H_GAP);
+      const y2=getMatchY(ri+1,nmi,rounds)+CARD_H/2+24;
+      const mx=x1+H_GAP/2;
+      const won=match.winner!==null;
+      const lc=won?gc:"rgba(255,255,255,.1)";
+      const sw=won?2:1.5;
+      const da=won?"none":"5,4";
+      svgLines.push(<line key={ri+"-"+mi+"a"} x1={x1} y1={y1} x2={mx} y2={y1} stroke={lc} strokeWidth={sw} strokeDasharray={da}/>);
+      svgLines.push(<line key={ri+"-"+mi+"b"} x1={mx} y1={y1} x2={mx} y2={y2} stroke={lc} strokeWidth={sw} strokeDasharray={da}/>);
+      svgLines.push(<line key={ri+"-"+mi+"c"} x1={mx} y1={y2} x2={x2} y2={y2} stroke={lc} strokeWidth={sw} strokeDasharray={da}/>);
+      if(won) svgLines.push(<circle key={ri+"-"+mi+"d"} cx={x2} cy={y2} r={3.5} fill={gc}/>);
+    });
+  });
+
   return (
     <div className="scroll-x-touch">
       <div style={{position:"relative",width:totalW,height:totalH,margin:"0 auto"}}>
 
-        {/* Linhas SVG Conectoras */}
+        {/* Linhas SVG */}
         <svg style={{position:"absolute",inset:0,width:"100%",height:"100%",pointerEvents:"none",overflow:"visible"}}>
-          {rounds.map((round,ri)=>{
-            if(ri===rounds.length-1) return null;
-            return round.matches.map((match,mi)=>{
-              const x1=ri*(CARD_W+H_GAP)+CARD_W;
-              const y1=getMatchY(ri,mi,rounds)+CARD_H/2+24;
-              
-              const isPlayInLayout = round.matches.length < rounds[ri+1].matches.length;
-              const nmi = isPlayInLayout ? mi * 2 : Math.floor(mi/2);
-              
-              const x2=(ri+1)*(CARD_W+H_GAP);
-              const y2=getMatchY(ri+1,nmi,rounds)+CARD_H/2+24;
-              const mx=x1+H_GAP/2;
-              const won=match.winner!==null;
-              const lc=won?gc:"rgba(255,255,255,.1)";
-              const sw=won?2:1.5;
-              const da=won?"none":"5,4";
-              return (
-                <g key={match.id || ri+"-"+mi}>
-                  <line x1={x1} y1={y1} x2={mx} y2={y1} stroke={lc} strokeWidth={sw} strokeDasharray={da}/>
-                  <line x1={mx} y1={y1} x2={mx} y2={y2} stroke={lc} strokeWidth={sw} strokeDasharray={da}/>
-                  <line x1={mx} y1={y2} x2={x2} y2={y2} stroke={lc} strokeWidth={sw} strokeDasharray={da}/>
-                  {won&&<circle cx={x2} cy={y2} r={3.5} fill={gc}/>}
-                </g>
-              );
-            });
-          })}
+          {svgLines}
         </svg>
 
         {/* Cards das Partidas */}
@@ -224,8 +222,8 @@ function RoundRobinView({ gData, gc }) {
     table[m.p1].j++; table[m.p2].j++;
     table[m.p1].gp+=g1; table[m.p1].gc+=g2;
     table[m.p2].gp+=g2; table[m.p2].gc+=g1;
-    ifg1>g2.v++;table[m.p1].pts+=3;table[m.p2].d++;}
-    else ifg2>g1.v++;table[m.p2].pts+=3;table[m.p1].d++;}
+    if(g1>g2){table[m.p1].v++;table[m.p1].pts+=3;table[m.p2].d++;}
+    else if(g2>g1){table[m.p2].v++;table[m.p2].pts+=3;table[m.p1].d++;}
     else{table[m.p1].e++;table[m.p1].pts++;table[m.p2].e++;table[m.p2].pts++;}
   }));
   const class_ = Object.values(table).sort((a,b)=>b.pts-a.pts||(b.gp-b.gc)-(a.gp-a.gc)||b.gp-a.gp);
@@ -354,6 +352,26 @@ function AoVivoTab({ mods }) {
   );
 }
 
+function calcClassificacao(teams, rounds) {
+  const table = {};
+  teams.forEach(t => table[t]={time:t,j:0,v:0,e:0,d:0,gp:0,gc:0,pts:0});
+  rounds.forEach(r => r.matches.forEach(m => {
+    const v1=m.gols1, v2=m.gols2;
+    if(v1===null||v1===undefined||v1===""||v1==="null") return;
+    if(v2===null||v2===undefined||v2===""||v2==="null") return;
+    const g1=parseInt(v1), g2=parseInt(v2);
+    if(isNaN(g1)||isNaN(g2)) return;
+    if(!table[m.p1]||!table[m.p2]) return;
+    table[m.p1].j++; table[m.p2].j++;
+    table[m.p1].gp+=g1; table[m.p1].gc+=g2;
+    table[m.p2].gp+=g2; table[m.p2].gc+=g1;
+    if(g1>g2){table[m.p1].v++;table[m.p1].pts+=3;table[m.p2].d++;}
+    else if(g2>g1){table[m.p2].v++;table[m.p2].pts+=3;table[m.p1].d++;}
+    else{table[m.p1].e++;table[m.p1].pts++;table[m.p2].e++;table[m.p2].pts++;}
+  }));
+  return Object.values(table).sort((a,b)=>b.pts-a.pts||(b.gp-b.gc)-(a.gp-a.gc)||b.gp-a.gp);
+}
+
 function ChaveamentoTab({ mods }) {
   return (
     <div style={{padding:"20px 24px",animation:"fadeIn .5s ease"}}>
@@ -384,15 +402,99 @@ function ChaveamentoTab({ mods }) {
   );
 }
 
+function RankingTab({ mods }) {
+  const ativas = mods.filter(m=>m.ativo);
+  return (
+    <div style={{padding:"20px 24px", animation:"fadeIn .5s ease"}}>
+      <div style={{textAlign:"center",marginBottom:24}}>
+        <div style={{fontFamily:"'Bebas Neue'",fontSize:26,letterSpacing:5,color:"#FFDF00"}}>🥇 CLASSIFICAÇÃO GERAL</div>
+        <div style={{display:"flex",gap:10,marginTop:10,justifyContent:"center",flexWrap:"wrap"}}>
+          {[["🏆 Campeão","10pts","#FFDF00"],["🥈 Vice","7pts","#94a3b8"],["🏅 Semifinal","5pts","#cd7f32"],["✅ Classificado","2pts","rgba(255,255,255,.4)"]].map(([l,p,c])=>(
+            <div key={l} style={{background:"rgba(255,255,255,.04)",border:"1px solid rgba(255,255,255,.1)",borderRadius:5,padding:"4px 10px",display:"flex",gap:6,alignItems:"center"}}>
+              <span style={{fontSize:11}}>{l}</span><span style={{fontWeight:800,color:c,fontSize:11}}>{p}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+      {ativas.length===0 && <div style={{textAlign:"center",color:"rgba(255,255,255,.3)",padding:40}}>Nenhuma modalidade iniciada ainda.</div>}
+      {mods.map(mod=>{
+        const meta=MODS_META.find(m=>m.id===mod.id)||{accent:"#FFDF00",emoji:"🏅"};
+        if(!mod.ativo) return null;
+        // Ranking do futsal (roundrobin)
+        const mistoGd = mod.genders?.misto;
+        if(mistoGd?.tipo==="roundrobin") {
+          const class_=calcClassificacao(mistoGd.teams||[],mistoGd.rounds||[]);
+          return (
+            <div key={mod.id} style={{marginBottom:28}}>
+              <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:12}}>
+                <span style={{fontSize:22}}>{meta.emoji}</span>
+                <span style={{fontFamily:"'Bebas Neue'",fontSize:20,color:meta.accent,letterSpacing:3}}>{mod.name}</span>
+              </div>
+              <div style={{background:"rgba(255,255,255,.02)",borderRadius:10,overflowX:"auto",border:"1px solid rgba(255,255,255,.07)"}}>
+                <div style={{display:"grid",gridTemplateColumns:"40px 1fr 36px 36px 36px 36px 44px 44px 48px",minWidth:460,padding:"8px 14px",background:"rgba(255,255,255,.05)",fontSize:9,letterSpacing:2,color:"rgba(255,255,255,.35)",textTransform:"uppercase",gap:4}}>
+                  <span>#</span><span>Time</span><span style={{textAlign:"center"}}>J</span><span style={{textAlign:"center"}}>V</span><span style={{textAlign:"center"}}>E</span><span style={{textAlign:"center"}}>D</span><span style={{textAlign:"center"}}>GP</span><span style={{textAlign:"center"}}>GC</span><span style={{textAlign:"center",fontWeight:800,color:"#FFDF00"}}>PTS</span>
+                </div>
+                {class_.map((t,i)=>(
+                  <div key={t.time} style={{display:"grid",gridTemplateColumns:"40px 1fr 36px 36px 36px 36px 44px 44px 48px",minWidth:460,padding:"10px 14px",borderTop:"1px solid rgba(255,255,255,.04)",background:i===0?"rgba(255,223,0,.05)":"transparent",gap:4,alignItems:"center"}}>
+                    <span style={{fontFamily:"'Bebas Neue'",fontSize:18,color:i===0?"#FFDF00":i===1?"#94a3b8":i===2?"#cd7f32":"rgba(255,255,255,.3)",textAlign:"center"}}>{i===0?"🥇":i===1?"🥈":i===2?"🥉":i+1}</span>
+                    <span style={{fontWeight:i===0?800:400,fontSize:13,color:i===0?"#FFDF00":"#e2e8f0"}}>{t.time}</span>
+                    {[t.j,t.v,t.e,t.d,t.gp,t.gc].map((v,vi)=><span key={vi} style={{textAlign:"center",fontSize:12,color:"rgba(255,255,255,.5)"}}>{v}</span>)}
+                    <span style={{textAlign:"center",fontWeight:800,fontSize:15,color:i===0?"#FFDF00":"rgba(255,255,255,.7)"}}>{t.pts}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          );
+        }
+        // Ranking de chaveamento — mostra campeões
+        const campeoes = Object.entries(mod.genders||{}).map(([gKey,gd])=>{
+          if(!gd||gd.tipo==="roundrobin") return null;
+          const campeao=gd.rounds[gd.rounds.length-1]?.matches[0]?.winner;
+          if(!campeao) return null;
+          const gc=gKey.includes("fem")?"#e91e8c":gKey.includes("masc")?"#1565C0":meta.accent;
+          return {label:NIVEL_LABELS[gKey]||gKey, campeao, gc};
+        }).filter(Boolean);
+        if(campeoes.length===0) return null;
+        return (
+          <div key={mod.id} style={{marginBottom:28}}>
+            <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:12}}>
+              <span style={{fontSize:22}}>{meta.emoji}</span>
+              <span style={{fontFamily:"'Bebas Neue'",fontSize:20,color:meta.accent,letterSpacing:3}}>{mod.name}</span>
+            </div>
+            <div style={{display:"flex",flexWrap:"wrap",gap:12}}>
+              {campeoes.map(({label,campeao,gc})=>(
+                <div key={label} style={{background:"linear-gradient(135deg,rgba(255,223,0,.12),rgba(255,180,0,.05))",border:"2px solid rgba(255,223,0,.3)",borderRadius:10,padding:"16px 20px",display:"flex",flexDirection:"column",alignItems:"center",gap:8,minWidth:160}}>
+                  <div style={{fontSize:9,letterSpacing:2,color:"rgba(255,255,255,.4)",textTransform:"uppercase"}}>{label}</div>
+                  <div style={{fontSize:32}}>🏆</div>
+                  <div style={{fontWeight:900,fontSize:15,color:"#FFDF00",textAlign:"center"}}>{campeao}</div>
+                  <div style={{fontSize:11,color:"rgba(255,223,0,.4)"}}>★ CAMPEÃO ★</div>
+                </div>
+              ))}
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
 function App() {
   const [tab, setTab] = useState("ao-vivo");
   const [data, setData] = useState(null);
 
   useEffect(() => {
-    if(window._fbListen) {
-      window._fbListen((fbData) => {
-        if(fbData && fbData.mods) setData(fbData);
-      });
+    const tryListen=()=>{
+      if(window._fbListen){
+        window._fbListen((fbData)=>{
+          if(fbData&&fbData.mods) setData(fbData);
+        });
+        return true;
+      }
+      return false;
+    };
+    if(!tryListen()){
+      const iv=setInterval(()=>{if(tryListen())clearInterval(iv);},200);
+      return()=>clearInterval(iv);
     }
   }, []);
 
@@ -400,33 +502,39 @@ function App() {
 
   return (
     <div style={{minHeight:"100vh",display:"flex",flexDirection:"column",background:"#0a0f00"}}>
-      {/* Header Fixo */}
-      <header style={{background:"rgba(3,7,0,.97)",backdropFilter:"blur(12px)",borderBottom:"3px solid #FFDF00",padding:"10px 24px",display:"flex",alignItems:"center",justifyContent:"space-between",position:"sticky",top:0,zIndex:100,boxShadow:"0 4px 20px rgba(255,223,0,.08)"}}>
+      <header style={{background:"rgba(3,7,0,.97)",backdropFilter:"blur(12px)",borderBottom:"3px solid #FFDF00",padding:"10px 24px",display:"flex",alignItems:"center",justifyContent:"space-between",position:"sticky",top:0,zIndex:100,boxShadow:"0 4px 20px rgba(255,223,0,.08)",flexWrap:"wrap",gap:8}}>
         <div style={{display:"flex",alignItems:"center",gap:12}}>
           <div style={{width:36,height:34,borderRadius:"50%",background:"linear-gradient(135deg,#009C3B,#002776)",border:"2px solid #FFDF00",display:"flex",alignItems:"center",justifyContent:"center",fontSize:16}}>🏆</div>
           <div>
             <div style={{fontFamily:"'Bebas Neue'",fontSize:22,letterSpacing:3,color:"#FFDF00",lineHeight:1}}>COPA SYLAS 2026</div>
-            <div style={{fontSize:8,color:"rgba(255,255,255,.3)",letterSpacing:2,marginTop:2}}>PLACAR OFICIAL DE JOGOS AO VIVO</div>
+            <div style={{fontSize:8,color:"rgba(255,255,255,.3)",letterSpacing:2,marginTop:2}}>PLACAR OFICIAL · AO VIVO</div>
           </div>
         </div>
-
-        <div style={{display:"flex",gap:6}}>
-          <button className={`tab-btn ${tab==="ao-vivo"?"active":""}`} onClick={()=>setTab("ao-vivo")}>📺 Transmissão</button>
-          <button className={`tab-btn ${tab==="chaves"?"active":""}`} onClick={()=>setTab("chaves")}>🌳 Ver Chaves</button>
+        <div style={{display:"flex",gap:6,flexWrap:"wrap"}}>
+          <button className={`tab-btn ${tab==="ao-vivo"?"active":""}`} onClick={()=>setTab("ao-vivo")}>📺 Ao Vivo</button>
+          <button className={`tab-btn ${tab==="chaves"?"active":""}`} onClick={()=>setTab("chaves")}>🏆 Chaveamento</button>
+          <button className={`tab-btn ${tab==="ranking"?"active":""}`} onClick={()=>setTab("ranking")}>🥇 Ranking</button>
+        </div>
+        <div style={{display:"flex",alignItems:"center",gap:6}}>
+          <div style={{width:7,height:7,borderRadius:"50%",background:"#ef4444",animation:"pulse 1s ease-in-out infinite"}}/>
+          <span style={{fontSize:9,color:"#ef4444",fontWeight:700,letterSpacing:2}}>AO VIVO</span>
         </div>
       </header>
 
       <FlagStrip h={36}/>
 
-      {/* Main Área */}
-      <main style={{flex:1,display:"flex",flexDirection:"column"}}>
-        {data === null ? (
+      <main style={{flex:1}}>
+        {data===null ? (
           <div style={{textAlign:"center",padding:"80px 20px"}}>
             <div style={{fontSize:44,animation:"spin 2s linear infinite",display:"inline-block"}}>⚙️</div>
-            <div style={{color:"rgba(255,255,255,.3)",fontSize:13,marginTop:12,letterSpacing:2}}>Conectando com o ginásio...</div>
+            <div style={{color:"rgba(255,255,255,.3)",fontSize:13,marginTop:12,letterSpacing:2}}>Conectando ao Firebase...</div>
           </div>
         ) : (
-          tab === "ao-vivo" ? <AoVivoTab mods={mods} /> : <ChaveamentoTab mods={mods} />
+          <>
+            {tab==="ao-vivo"  && <AoVivoTab mods={mods}/>}
+            {tab==="chaves"   && <ChaveamentoTab mods={mods}/>}
+            {tab==="ranking"  && <RankingTab mods={mods}/>}
+          </>
         )}
       </main>
 
