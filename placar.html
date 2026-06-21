@@ -282,29 +282,40 @@ function RoundRobinView({ gData, gc }) {
 function AoVivoTab({ mods }) {
   const [modIdx, setModIdx] = useState(0);
   const [catIdx, setCatIdx] = useState(0);
+  const [autoPlay, setAutoPlay] = useState(true);
+  const [tempo, setTempo] = useState(12); // segundos para próximo
   const ativas = mods.filter(m => m.ativo);
 
+  // Auto-rotação com contador regressivo
   useEffect(() => {
-    if(ativas.length === 0) return;
+    if(ativas.length === 0 || !autoPlay) return;
+    setTempo(12);
+    const tick = setInterval(() => setTempo(t => t > 0 ? t-1 : 12), 1000);
     const interval = setInterval(() => {
       setModIdx(prev => (prev + 1) % ativas.length);
-      setCatIdx(0); // Reseta a subcategoria ao rotacionar esporte
+      setCatIdx(0);
+      setTempo(12);
     }, 12000);
-    return () => clearInterval(interval);
-  }, [ativas.length]);
+    return () => { clearInterval(interval); clearInterval(tick); };
+  }, [ativas.length, autoPlay, modIdx]);
+
+  const irPara = (idx) => {
+    setModIdx(((idx % ativas.length) + ativas.length) % ativas.length);
+    setCatIdx(0);
+    setTempo(12);
+  };
 
   if(ativas.length === 0) return (
     <div style={{textAlign:"center",padding:"80px 20px",animation:"fadeIn .4s ease"}}>
       <div style={{fontSize:56,marginBottom:16,opacity:.2}}>🔒</div>
       <div style={{color:"rgba(255,255,255,.3)",fontSize:14,letterSpacing:2,fontWeight:700}}>JOGOS EM PREPARAÇÃO</div>
-      <div style={{color:"rgba(255,255,255,.15)",fontSize:11,marginTop:6}}>Os coordenadores estão organizando as chaves. Aguarde o início!</div>
+      <div style={{color:"rgba(255,255,255,.15)",fontSize:11,marginTop:6}}>Os coordenadores estão organizando as chaves. Aguarde!</div>
     </div>
   );
 
   const mod = ativas[modIdx % ativas.length];
   const meta = MODS_META.find(m => m.id === mod.id) || {accent:"#FFDF00",emoji:"🏅"};
-  
-  // Mapeia chaves de categorias disponíveis (fund_masc, misto, etc.)
+
   const categoriasKeys = Object.keys(mod.genders || {}).filter(k => {
     const gd = mod.genders[k];
     return gd && (gd.tipo === "roundrobin" || gd.rounds?.some(r => r.matches.some(m => m.p1 || m.p2)));
@@ -317,37 +328,119 @@ function AoVivoTab({ mods }) {
 
   return (
     <div style={{padding:"20px 24px",flex:1,display:"flex",flexDirection:"column"}}>
-      {/* Banner Principal Rotativo */}
-      <div style={{background:`linear-gradient(135deg, ${meta.accent}12, #050a00)`, border:`1px solid ${meta.accent}25`, borderRadius:12, padding:"20px 24px", marginBottom:20, position:"relative", overflow:"hidden", animation:"fadeIn .5s ease"}}>
+
+      {/* Controles de navegação */}
+      <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:16,flexWrap:"wrap"}}>
+
+        {/* Botão anterior */}
+        <button onClick={()=>irPara(modIdx-1)}
+          style={{width:36,height:36,borderRadius:"50%",background:"rgba(255,255,255,.06)",border:"1px solid rgba(255,255,255,.15)",color:"#fff",fontSize:16,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>
+          ‹
+        </button>
+
+        {/* Dots das modalidades */}
+        <div style={{display:"flex",gap:8,flex:1,justifyContent:"center",flexWrap:"wrap"}}>
+          {ativas.map((m,i)=>{
+            const mt = MODS_META.find(x=>x.id===m.id)||{accent:"#FFDF00",emoji:"🏅"};
+            const ativo = i===modIdx%ativas.length;
+            return (
+              <button key={m.id} onClick={()=>irPara(i)}
+                style={{display:"flex",alignItems:"center",gap:5,padding:"5px 12px",borderRadius:20,
+                  background:ativo?`${mt.accent}25`:"rgba(255,255,255,.04)",
+                  border:`1px solid ${ativo?mt.accent:"rgba(255,255,255,.1)"}`,
+                  color:ativo?mt.accent:"rgba(255,255,255,.3)",
+                  fontSize:11,fontWeight:ativo?800:400,cursor:"pointer",transition:"all .2s"}}>
+                <span>{mt.emoji}</span>
+                <span style={{display:"none"}}>{m.name}</span>
+              </button>
+            );
+          })}
+        </div>
+
+        {/* Botão próximo */}
+        <button onClick={()=>irPara(modIdx+1)}
+          style={{width:36,height:36,borderRadius:"50%",background:"rgba(255,255,255,.06)",border:"1px solid rgba(255,255,255,.15)",color:"#fff",fontSize:16,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>
+          ›
+        </button>
+
+        {/* Toggle auto-play + contador */}
+        <button onClick={()=>setAutoPlay(!autoPlay)}
+          style={{display:"flex",alignItems:"center",gap:5,padding:"5px 10px",borderRadius:20,
+            background:autoPlay?"rgba(0,156,59,.15)":"rgba(255,255,255,.04)",
+            border:`1px solid ${autoPlay?"rgba(0,156,59,.4)":"rgba(255,255,255,.1)"}`,
+            color:autoPlay?"#009C3B":"rgba(255,255,255,.3)",
+            fontSize:10,fontWeight:700,cursor:"pointer",transition:"all .2s",flexShrink:0}}>
+          {autoPlay ? `⏸ ${tempo}s` : "▶ Auto"}
+        </button>
+      </div>
+
+      {/* Banner Principal */}
+      <div style={{background:`linear-gradient(135deg,${meta.accent}12,#050a00)`,border:`1px solid ${meta.accent}25`,borderRadius:12,padding:"20px 24px",marginBottom:20,position:"relative",overflow:"hidden",animation:"fadeIn .4s ease"}}>
+
+        {/* Barra de progresso automático */}
+        {autoPlay && (
+          <div style={{position:"absolute",bottom:0,left:0,height:3,background:`${meta.accent}`,borderRadius:"0 2px 2px 0",
+            width:`${(tempo/12)*100}%`,transition:"width 1s linear"}}/>
+        )}
+
         <div style={{display:"flex",alignItems:"center",gap:16,zIndex:2,position:"relative"}}>
           <span style={{fontSize:42,filter:`drop-shadow(0 0 10px ${meta.accent})`}}>{meta.emoji}</span>
           <div style={{flex:1}}>
-            <span style={{fontSize:10,fontWeight:800,letterSpacing:3,color:meta.accent,background:`${meta.accent}15`,padding:"3px 8px",borderRadius:4}}>MODALIDADE EM ANDAMENTO</span>
+            <span style={{fontSize:10,fontWeight:800,letterSpacing:3,color:meta.accent,background:`${meta.accent}15`,padding:"3px 8px",borderRadius:4}}>
+              {modIdx+1} de {ativas.length} · MODALIDADE EM ANDAMENTO
+            </span>
             <div style={{fontFamily:"'Bebas Neue'",fontSize:36,color:"#fff",letterSpacing:2,lineHeight:1.1,marginTop:4}}>{mod.name}</div>
-            <div style={{fontSize:12,color:gc,fontWeight:700,letterSpacing:1,marginTop:2}}>{NIVEL_LABELS[currentCatKey] || ""}</div>
+            <div style={{fontSize:12,color:gc,fontWeight:700,letterSpacing:1,marginTop:2}}>{NIVEL_LABELS[currentCatKey]||""}</div>
           </div>
-          <div style={{display:"flex",gap:6,alignItems:"center"}}>
-            <div style={{width:8,height:8,borderRadius:"50%",background:"#ef4444",animation:"pulse 1s infinite"}}/>
-            <span style={{fontSize:10,color:"#ef4444",fontWeight:900,letterSpacing:2}}>AO VIVO</span>
+          <div style={{display:"flex",flexDirection:"column",alignItems:"center",gap:4}}>
+            <div style={{display:"flex",gap:4,alignItems:"center"}}>
+              <div style={{width:8,height:8,borderRadius:"50%",background:"#ef4444",animation:"pulse 1s infinite"}}/>
+              <span style={{fontSize:10,color:"#ef4444",fontWeight:900,letterSpacing:2}}>AO VIVO</span>
+            </div>
+            {/* Botões de categoria (fund_masc, fund_fem etc) */}
+            {categoriasKeys.length > 1 && (
+              <div style={{display:"flex",gap:4,flexWrap:"wrap",justifyContent:"center"}}>
+                {categoriasKeys.map((k,i)=>(
+                  <button key={k} onClick={()=>setCatIdx(i)}
+                    style={{padding:"3px 8px",borderRadius:4,border:`1px solid ${i===catIdx%categoriasKeys.length?gc:"rgba(255,255,255,.15)"}`,
+                      background:i===catIdx%categoriasKeys.length?`${gc}22`:"transparent",
+                      color:i===catIdx%categoriasKeys.length?gc:"rgba(255,255,255,.3)",
+                      fontSize:9,fontWeight:700,cursor:"pointer",letterSpacing:1}}>
+                    {NIVEL_LABELS[k]||k}
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
         </div>
       </div>
 
-      {/* Renderização do Tipo de Competição */}
+      {/* Conteúdo */}
       <div style={{flex:1}}>
         {gData ? (
           isRoundRobin ? (
-            <RoundRobinView gData={gData} gc={gc} />
+            <RoundRobinView gData={gData} gc={gc}/>
           ) : (
             <div style={{animation:"fadeIn .4s ease"}}>
               <div style={{fontSize:11,fontWeight:800,letterSpacing:2,color:"rgba(255,255,255,.3)",marginBottom:14,textTransform:"uppercase"}}>🌳 Chave de Eliminatórias</div>
-              <BracketView rounds={gData.rounds || []} gc={gc} />
+              <BracketView rounds={gData.rounds||[]} gc={gc}/>
             </div>
           )
         ) : (
-          <div style={{color:"rgba(255,255,255,.2)",fontSize:12,textAlign:"center",padding:40}}>Nenhum dado estruturado nesta categoria.</div>
+          <div style={{color:"rgba(255,255,255,.2)",fontSize:12,textAlign:"center",padding:40}}>Nenhum dado nesta categoria.</div>
         )}
       </div>
+
+      {/* Navegação inferior — swipe visual */}
+      {ativas.length > 1 && (
+        <div style={{display:"flex",justifyContent:"center",gap:6,marginTop:16}}>
+          {ativas.map((_,i)=>(
+            <div key={i} onClick={()=>irPara(i)} style={{height:4,borderRadius:2,cursor:"pointer",transition:"all .3s",
+              width:i===modIdx%ativas.length?24:6,
+              background:i===modIdx%ativas.length?"#FFDF00":"rgba(255,255,255,.2)"}}/>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
