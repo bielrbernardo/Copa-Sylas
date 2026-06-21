@@ -219,7 +219,7 @@ function Home({ mods, onNav, isMobile }) {
         <div style={{position:"relative", zIndex:3, textAlign:"center", padding:isMobile?"60px 16px":"90px 24px"}}>
           <div className="fu1" style={{fontSize:11, letterSpacing:7, color:MGOLD, marginBottom:5}}>★ ★ ★ ★ ★</div>
           <div style={{lineHeight:1, marginBottom:4, animation:"floatUp 3s ease-in-out infinite", filter:"drop-shadow(0 0 25px rgba(0,156,59,.9))"}}><BRFlag size={isMobile?64:86}/></div>
-          <div className="fu2" style={{fontFamily:"'Bebas Neue',cursive", fontSize:"clamp(58px,11vw,120px)", letterSpacing:6, lineHeight:.88, background:"linear-gradient(180deg,#FFDF00,#FFB800,#cc8800,#FFDF00)", WebkitBackgroundClip:"text", WebkitTextFillColor:"transparent"}}>
+          <div className="fu2" style={{fontFamily:"'Bebas Neue',cursive", fontSize:"clamp(58px,11vw,120px)", letterSpacing:6, lineHeight:.88, background:"linear-gradient(180deg,#FFDF00,#FFB800,#cc8800,#FFDF00)", WebkitBackgroundClip:"text", WebkitTextFillColor:"transparent", backgroundClip:"text", color:"transparent"}}>
             COPA<br/>SYLAS
           </div>
           <div className="fu2" style={{fontFamily:"'Bebas Neue',cursive", fontSize:"clamp(32px,6vw,66px)", letterSpacing:12, color:MGREEN, marginTop:4}}>2026</div>
