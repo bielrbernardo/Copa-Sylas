@@ -675,6 +675,26 @@ const NIVEL_TABS = [
   {key:"em_fem",    label:"🎓 EM Fem",     short:"EM.F",   gc:"#a855f7", gbg:"linear-gradient(160deg,#1a0028,#280038,#0a0f00)"},
 ];
 
+function calcClassificacao(teams, rounds) {
+  const table = {};
+  teams.forEach(t => table[t]={time:t,j:0,v:0,e:0,d:0,gp:0,gc:0,pts:0});
+  rounds.forEach(r => r.matches.forEach(m => {
+    const v1=m.gols1, v2=m.gols2;
+    if(v1===null||v1===undefined||v1===""||v1==="null") return;
+    if(v2===null||v2===undefined||v2===""||v2==="null") return;
+    const g1=parseInt(v1), g2=parseInt(v2);
+    if(isNaN(g1)||isNaN(g2)) return;
+    if(!table[m.p1]||!table[m.p2]) return;
+    table[m.p1].j++; table[m.p2].j++;
+    table[m.p1].gp+=g1; table[m.p1].gc+=g2;
+    table[m.p2].gp+=g2; table[m.p2].gc+=g1;
+    if(g1>g2){table[m.p1].v++;table[m.p1].pts+=3;table[m.p2].d++;}
+    else if(g2>g1){table[m.p2].v++;table[m.p2].pts+=3;table[m.p1].d++;}
+    else{table[m.p1].e++;table[m.p1].pts++;table[m.p2].e++;table[m.p2].pts++;}
+  }));
+  return Object.values(table).sort((a,b)=>b.pts-a.pts||(b.gp-b.gc)-(a.gp-a.gc)||b.gp-a.gp);
+}
+
 function RoundRobin({ gData, gc, canEdit, onChange }) {
   const [rodada, setRodada] = useState(0);
   const [editGols, setEditGols] = useState(null);
