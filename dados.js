@@ -47,58 +47,53 @@ const INITIAL = { mods: MODS_META.map(m => {
   return { ...m, genders:{ misto:mkMisto() }};
 })};
 
-// ─── CHAVE EXATA COM OS 20 NOMES DO WHATSAPP (SEM BYES DISCREPANTES) ───
-// Os 8 primeiros jogam a preliminar (Play-in). Os outros 12 entram direto na fase seguinte.
+// ═══════════════════════════════════════════════════════════════════════════════
+// 🏓 TÊNIS DE MESA — ENSINO FUNDAMENTAL MASCULINO
+// Estrutura exata da imagem: 20 jogadores, 4 fases
+// 1ª Fase: 10 jogos (todos os 20 jogam)
+// 2ª Fase: 5 jogos (10 vencedores) — vencedor do jogo 5 aguarda o venc. do jogo 4
+// Semifinal: 2 jogos (4 vencedores de 2ª fase + 1 vencedor do grupo especial)
+// Final: 1 jogo
+// ═══════════════════════════════════════════════════════════════════════════════
 INITIAL.mods[0].genders.fund_masc.rounds = [
   {
-    id: "tm_playin",
-    name: "Play-in (Preliminar)",
-    matches: [
-      { id: "tp1", p1: "CHRISTOPHER", p2: "JOSÉ", winner: null },
-      { id: "tp2", p1: "PAULO", p2: "JOÃO PEDRO", winner: null },
-      { id: "tp3", p1: "VITOR", p2: "RUAN", winner: null },
-      { id: "tp4", p1: "JULLIO", p2: "EDUARDO", winner: null }
+    id:"tm_r1", name:"1ª Fase",
+    matches:[
+      {id:"t01",p1:"CHRISTOPHER", p2:"JOSÉ",       winner:null},
+      {id:"t02",p1:"PAULO",       p2:"JOÃO PEDRO", winner:null},
+      {id:"t03",p1:"VITOR",       p2:"RUAN",       winner:null},
+      {id:"t04",p1:"JULLIO",      p2:"EDUARDO",    winner:null},
+      {id:"t05",p1:"PEDRO V",     p2:"LEO A",      winner:null},
+      {id:"t06",p1:"LUIZ H",      p2:"GUSTAVO",    winner:null},
+      {id:"t07",p1:"ENDREW",      p2:"PIETRO",     winner:null},
+      {id:"t08",p1:"MARCELO",     p2:"DAVI",       winner:null},
+      {id:"t09",p1:"LEONARDO D",  p2:"ARTHUR",     winner:null},
+      {id:"t10",p1:"HECTOR",      p2:"MARCOS",     winner:null},
     ]
   },
   {
-    id: "tm_oitavas",
-    name: "Fase Principal (Oitavas)",
-    matches: [
-      { id: "to1", p1: null, p2: "PEDRO V", winner: null }, // Vencedor tp1 pega Pedro V
-      { id: "to2", p1: "LEO A", p2: "LUIZ H", winner: null },
-      { id: "to3", p1: null, p2: "GUSTAVO", winner: null }, // Vencedor tp2 pega Gustavo
-      { id: "to4", p1: "ENDREW", p2: "PIETRO", winner: null },
-      { id: "to5", p1: null, p2: "MARCELO", winner: null }, // Vencedor tp3 pega Marcelo
-      { id: "to6", p1: "DAVI", p2: "LEONARDO D", winner: null },
-      { id: "to7", p1: null, p2: "ARTHUR", winner: null }, // Vencedor tp4 pega Arthur
-      { id: "to8", p1: "HECTOR", p2: "MARCOS", winner: null }
+    id:"tm_r2", name:"2ª Fase",
+    matches:[
+      {id:"t11",p1:null,p2:null,winner:null}, // venc t01 x venc t02
+      {id:"t12",p1:null,p2:null,winner:null}, // venc t03 x venc t04
+      {id:"t13",p1:null,p2:null,winner:null}, // venc t05 x venc t06
+      {id:"t14",p1:null,p2:null,winner:null}, // venc t07 x venc t08
+      {id:"t15",p1:null,p2:null,winner:null}, // venc t09 x venc t10
     ]
   },
   {
-    id: "tm_quartas",
-    name: "Quartas de Final",
-    matches: [
-      { id: "tq1", p1: null, p2: null, winner: null },
-      { id: "tq2", p1: null, p2: null, winner: null },
-      { id: "tq3", p1: null, p2: null, winner: null },
-      { id: "tq4", p1: null, p2: null, winner: null }
+    id:"tm_r3", name:"Semifinal",
+    matches:[
+      {id:"t16",p1:null,p2:null,winner:null}, // venc t11 x venc t12
+      {id:"t17",p1:null,p2:null,winner:null}, // venc t13 x (venc t14 ou t15)
     ]
   },
   {
-    id: "tm_semi",
-    name: "Semifinal",
-    matches: [
-      { id: "ts1", p1: null, p2: null, winner: null },
-      { id: "ts2", p1: null, p2: null, winner: null }
+    id:"tm_r4", name:"Final",
+    matches:[
+      {id:"t18",p1:null,p2:null,winner:null},
     ]
   },
-  {
-    id: "tm_final",
-    name: "Final",
-    matches: [
-      { id: "tf_m", p1: null, p2: null, winner: null }
-    ]
-  }
 ];
 
 // Fundamental Feminino Estável
@@ -135,12 +130,19 @@ INITIAL.mods[4].genders.misto = {
   classificacao: FUTSAL_TEAMS.map(t=>({time:t,j:0,v:0,e:0,d:0,gp:0,gc:0,pts:0})),
 };
 
-window.USERS = USERS;
-window.FLAGS = FLAGS;
-window.MODS_META = MODS_META;
-window.INITIAL = INITIAL;
-window.uid = uid;
-window.mkMatch = mkMatch;
-window.mkRound = mkRound;
-window.mkNivel = mkNivel;
-window.mkMisto = mkMisto;
+window.USERS    = USERS;
+window.FLAGS    = FLAGS;
+window.MODS_META= MODS_META;
+window.INITIAL  = INITIAL;
+window.uid      = uid;
+window.mkMatch  = mkMatch;
+window.mkRound  = mkRound;
+window.mkNivel  = mkNivel;
+window.mkMisto  = mkMisto;
+// Cores globais
+window.MGOLD    = MGOLD;
+window.MGREEN   = MGREEN;
+window.M_COLOR  = M_COLOR;
+window.F_COLOR  = F_COLOR;
+window.M_BG     = M_BG;
+window.F_BG     = F_BG;
