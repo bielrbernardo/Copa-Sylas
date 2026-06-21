@@ -49,49 +49,71 @@ const INITIAL = { mods: MODS_META.map(m => {
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // 🏓 TÊNIS DE MESA — ENSINO FUNDAMENTAL MASCULINO
-// Estrutura exata da imagem: 20 jogadores, 4 fases
-// 1ª Fase: 10 jogos (todos os 20 jogam)
-// 2ª Fase: 5 jogos (10 vencedores) — vencedor do jogo 5 aguarda o venc. do jogo 4
-// Semifinal: 2 jogos (4 vencedores de 2ª fase + 1 vencedor do grupo especial)
-// Final: 1 jogo
+// Estrutura exata: 20 jogadores, 5 fases
+// Fase Inicial (20) → Oitavas (10 jogos) → Quartas (5 jogos) → Semi (2) → Final (1)
 // ═══════════════════════════════════════════════════════════════════════════════
 INITIAL.mods[0].genders.fund_masc.rounds = [
   {
-    id:"tm_r1", name:"1ª Fase",
+    id:"tm_r0", name:"Fase Inicial",
     matches:[
-      {id:"t01",p1:"CHRISTOPHER", p2:"JOSÉ",       winner:null},
-      {id:"t02",p1:"PAULO",       p2:"JOÃO PEDRO", winner:null},
-      {id:"t03",p1:"VITOR",       p2:"RUAN",       winner:null},
-      {id:"t04",p1:"JULLIO",      p2:"EDUARDO",    winner:null},
-      {id:"t05",p1:"PEDRO V",     p2:"LEO A",      winner:null},
-      {id:"t06",p1:"LUIZ H",      p2:"GUSTAVO",    winner:null},
-      {id:"t07",p1:"ENDREW",      p2:"PIETRO",     winner:null},
-      {id:"t08",p1:"MARCELO",     p2:"DAVI",       winner:null},
-      {id:"t09",p1:"LEONARDO D",  p2:"ARTHUR",     winner:null},
-      {id:"t10",p1:"HECTOR",      p2:"MARCOS",     winner:null},
+      {id:"t01",p1:"CHRISTOPHER", p2:null, winner:null},
+      {id:"t02",p1:"JOSÉ",        p2:null, winner:null},
+      {id:"t03",p1:"PAULO",       p2:null, winner:null},
+      {id:"t04",p1:"JOÃO PEDRO",  p2:null, winner:null},
+      {id:"t05",p1:"VITOR",       p2:null, winner:null},
+      {id:"t06",p1:"RUAN",        p2:null, winner:null},
+      {id:"t07",p1:"JULLIO",      p2:null, winner:null},
+      {id:"t08",p1:"EDUARDO",     p2:null, winner:null},
+      {id:"t09",p1:"PEDRO V",     p2:null, winner:null},
+      {id:"t10",p1:"LEO A",       p2:null, winner:null},
+      {id:"t11",p1:"LUIZ H",      p2:null, winner:null},
+      {id:"t12",p1:"GUSTAVO",     p2:null, winner:null},
+      {id:"t13",p1:"ENDREW",      p2:null, winner:null},
+      {id:"t14",p1:"PIETRO",      p2:null, winner:null},
+      {id:"t15",p1:"MARCELO",     p2:null, winner:null},
+      {id:"t16",p1:"DAVI",        p2:null, winner:null},
+      {id:"t17",p1:"LEONARDO D",  p2:null, winner:null},
+      {id:"t18",p1:"ARTHUR",      p2:null, winner:null},
+      {id:"t19",p1:"HECTOR",      p2:null, winner:null},
+      {id:"t20",p1:"MARCOS",      p2:null, winner:null},
     ]
   },
   {
-    id:"tm_r2", name:"2ª Fase",
+    id:"tm_r1", name:"Oitavas de Final",
     matches:[
-      {id:"t11",p1:null,p2:null,winner:null}, // venc t01 x venc t02
-      {id:"t12",p1:null,p2:null,winner:null}, // venc t03 x venc t04
-      {id:"t13",p1:null,p2:null,winner:null}, // venc t05 x venc t06
-      {id:"t14",p1:null,p2:null,winner:null}, // venc t07 x venc t08
-      {id:"t15",p1:null,p2:null,winner:null}, // venc t09 x venc t10
+      {id:"t21",p1:"CHRISTOPHER", p2:"JOSÉ",       winner:null},
+      {id:"t22",p1:"PAULO",       p2:"JOÃO PEDRO", winner:null},
+      {id:"t23",p1:"VITOR",       p2:"RUAN",       winner:null},
+      {id:"t24",p1:"JULLIO",      p2:"EDUARDO",    winner:null},
+      {id:"t25",p1:"PEDRO V",     p2:"LEO A",      winner:null},
+      {id:"t26",p1:"LUIZ H",      p2:"GUSTAVO",    winner:null},
+      {id:"t27",p1:"ENDREW",      p2:"PIETRO",     winner:null},
+      {id:"t28",p1:"MARCELO",     p2:"DAVI",       winner:null},
+      {id:"t29",p1:"LEONARDO D",  p2:"ARTHUR",     winner:null},
+      {id:"t30",p1:"HECTOR",      p2:"MARCOS",     winner:null},
+    ]
+  },
+  {
+    id:"tm_r2", name:"Quartas de Final",
+    matches:[
+      {id:"t31",p1:null,p2:null,winner:null},
+      {id:"t32",p1:null,p2:null,winner:null},
+      {id:"t33",p1:null,p2:null,winner:null},
+      {id:"t34",p1:null,p2:null,winner:null},
+      {id:"t35",p1:null,p2:null,winner:null},
     ]
   },
   {
     id:"tm_r3", name:"Semifinal",
     matches:[
-      {id:"t16",p1:null,p2:null,winner:null}, // venc t11 x venc t12
-      {id:"t17",p1:null,p2:null,winner:null}, // venc t13 x (venc t14 ou t15)
+      {id:"t36",p1:null,p2:null,winner:null},
+      {id:"t37",p1:null,p2:null,winner:null},
     ]
   },
   {
     id:"tm_r4", name:"Final",
     matches:[
-      {id:"t18",p1:null,p2:null,winner:null},
+      {id:"t38",p1:null,p2:null,winner:null},
     ]
   },
 ];
