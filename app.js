@@ -9,34 +9,44 @@ const INITIAL = window.INITIAL;
 
 // ─── PROPAGAR VENCEDORES ENTRE FASES ─────────────────────────────────────────
 function propagate(rounds) {
-  const r = rounds.map(rn=>({...rn, matches:rn.matches.map(m=>({...m}))}));
-  for(let ri=0;ri<r.length-1;ri++) {
-    const cur=r[ri].matches;
-    const nxt=r[ri+1].matches;
-    const curLen=cur.length;
-    const nxtLen=nxt.length;
+  try {
+    const r = rounds.map(rn=>({...rn, matches:rn.matches.map(m=>({...m}))}));
+    for(let ri=0; ri<r.length-1; ri++) {
+      const cur = r[ri].matches;
+      const nxt = r[ri+1].matches;
 
-    for(let mi=0;mi<curLen;mi++) {
-      const w = cur[mi].winner || cur[mi].p1; // Fase Inicial: p1 sozinho avança
-      if(!w) continue;
-
-      // Caso especial: Fase Inicial (20 cards individuais) → Oitavas (10 jogos)
-      // Cada par (0,1), (2,3)... forma um jogo nas oitavas
-      if(curLen === nxtLen*2 || curLen > nxtLen) {
-        const slot = Math.floor(mi/2);
-        if(slot >= nxtLen) continue;
-        if(mi%2===0) nxt[slot].p1 = cur[mi].p1||cur[mi].winner;
-        else         nxt[slot].p2 = cur[mi].p1||cur[mi].winner;
-      } else {
-        // Caso normal: par de vencedores forma próximo jogo
-        const slot = Math.floor(mi/2);
-        if(slot >= nxtLen) continue;
-        if(mi%2===0) nxt[slot].p1 = cur[mi].winner;
-        else         nxt[slot].p2 = cur[mi].winner;
+      // Fase Inicial → Oitavas: 20 cards individuais (p2=null) viram 10 jogos
+      // Cada par de cards (0,1), (2,3)... forma um confronto nas oitavas
+      if(cur.length === nxt.length * 2) {
+        cur.forEach((m, mi) => {
+          const slot = Math.floor(mi/2);
+          if(slot >= nxt.length) return;
+          // Pega o nome do jogador (p1 é o único campo preenchido na fase inicial)
+          const nome = m.p1;
+          if(!nome) return;
+          if(mi%2===0) nxt[slot] = {...nxt[slot], p1: nome};
+          else         nxt[slot] = {...nxt[slot], p2: nome};
+        });
+        continue; // Não propaga winner da fase inicial (não existe winner ainda)
       }
+
+      // Caso normal: vencedor de par (mi=0,1) → próxima fase slot
+      // Oitavas(10)→Quartas(5): slot = floor(mi/2), mas 10/2=5 ✅
+      // Quartas(5)→Semi(2): slot = floor(mi/2) → 0,0,1,1,2 — slot 2 não existe!
+      // Então o 5º jogo das quartas vai para semifinal como jogo extra
+      cur.forEach((m, mi) => {
+        if(!m.winner) return;
+        const slot = Math.floor(mi/2);
+        if(slot >= nxt.length) return;
+        if(mi%2===0) nxt[slot] = {...nxt[slot], p1: m.winner};
+        else         nxt[slot] = {...nxt[slot], p2: m.winner};
+      });
     }
+    return r;
+  } catch(e) {
+    console.error('propagate error:', e);
+    return rounds; // Retorna original sem alterar se der erro
   }
-  return r;
 }
 window.propagate = propagate;
 
