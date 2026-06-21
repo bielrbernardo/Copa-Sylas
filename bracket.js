@@ -20,17 +20,37 @@ function getMatchY(ri, mi, rounds) {
 
 // ─── CARD DE CONFRONTO ────────────────────────────────────────────────────────
 function MatchCard({ match, gc, canEdit, onWin, onEdit }) {
+  const soloCard = match.p1 && !match.p2; // Fase Inicial: só p1
   return (
     <div style={{background:"rgba(255,255,255,.04)", border:`1px solid ${match.winner?"rgba(255,223,0,.2)":"rgba(255,255,255,.08)"}`, borderRadius:8, overflow:"hidden", minWidth:185, position:"relative", opacity:(!match.p1&&!match.p2)?.38:1}}>
       {canEdit&&<button onClick={()=>onEdit(match)} style={{position:"absolute", top:3, right:3, background:"none", border:"none", color:"rgba(255,255,255,.25)", cursor:"pointer", fontSize:11, zIndex:1}}>✏️</button>}
-      {[match.p1,match.p2].map((n,pi)=>(
-        <div key={pi} className="mrow" onClick={()=>canEdit&&n&&n!=="BYE"&&onWin(match.id,n)}
-          style={{borderBottom:pi===0?"1px solid rgba(255,255,255,.06)":"none", background:match.winner===n?`${gc}28`:"transparent", cursor:canEdit&&n&&n!=="BYE"?"pointer":"default", color:match.winner===n?gc:n?"#e2e8f0":"rgba(255,255,255,.2)", fontWeight:match.winner===n?800:400}}>
-          {match.winner===n&&<span style={{fontSize:10, color:gc}}>✓</span>}
-          <span>{n||"—"}</span>
-          {n==="BYE"&&<span style={{fontSize:9, color:"#64748b", marginLeft:"auto"}}>bye</span>}
+      {soloCard ? (
+        // Card da Fase Inicial — só um jogador, clicável para avançar
+        <div className="mrow"
+          onClick={()=>canEdit&&match.p1&&onWin(match.id,match.p1)}
+          style={{height:CARD_H, padding:"0 10px", display:"flex", alignItems:"center", gap:6,
+            background:match.winner===match.p1?`${gc}28`:"transparent",
+            cursor:canEdit&&match.p1?"pointer":"default",
+            color:match.winner===match.p1?gc:match.p1?"#e2e8f0":"rgba(255,255,255,.2)",
+            fontWeight:match.winner===match.p1?800:400, fontSize:13}}>
+          {match.winner===match.p1&&<div style={{width:14,height:14,borderRadius:"50%",background:gc,display:"flex",alignItems:"center",justifyContent:"center",fontSize:8,color:"#0a0f00",fontWeight:900,flexShrink:0}}>✓</div>}
+          <span style={{flex:1,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{match.p1||"—"}</span>
         </div>
-      ))}
+      ) : (
+        [match.p1,match.p2].map((n,pi)=>(
+          <div key={pi} className="mrow" onClick={()=>canEdit&&n&&n!=="BYE"&&onWin(match.id,n)}
+            style={{height:"50%", padding:"0 10px", display:"flex", alignItems:"center", gap:6,
+              borderBottom:pi===0?"1px solid rgba(255,255,255,.07)":"none",
+              background:match.winner===n?`${gc}28`:"transparent",
+              cursor:canEdit&&n&&n!=="BYE"?"pointer":"default",
+              color:match.winner===n?gc:n&&n!=="BYE"?"#e2e8f0":"rgba(255,255,255,.2)",
+              fontWeight:match.winner===n?800:400, fontSize:12}}>
+            {match.winner===n&&<div style={{width:14,height:14,borderRadius:"50%",background:gc,display:"flex",alignItems:"center",justifyContent:"center",fontSize:8,color:"#0a0f00",fontWeight:900,flexShrink:0}}>✓</div>}
+            <span style={{flex:1,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{n||"—"}</span>
+            {n==="BYE"&&<span style={{fontSize:9,color:"#64748b"}}>bye</span>}
+          </div>
+        ))
+      )}
     </div>
   );
 }
