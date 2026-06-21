@@ -229,6 +229,13 @@ function Home({ mods, onNav, isMobile }) {
             <span style={{fontSize:isMobile?9:11, letterSpacing:2, color:MGOLD, fontWeight:800}}>PEI · SYLAS BALTAZAR · MIRACATU · SP</span>
             <span>🏆</span>
           </div>
+          <div className="fu3" style={{marginTop:14}}>
+            <a href="placar.html" target="_blank" rel="noopener"
+              style={{display:"inline-flex",alignItems:"center",gap:8,background:"linear-gradient(135deg,rgba(0,156,59,.25),rgba(0,156,59,.1))",border:"2px solid rgba(0,156,59,.5)",borderRadius:30,padding:isMobile?"10px 22px":"12px 32px",textDecoration:"none"}}>
+              <span style={{width:8,height:8,borderRadius:"50%",background:"#009C3B",animation:"pulse 1s ease-in-out infinite",display:"inline-block"}}/>
+              <span style={{fontSize:isMobile?11:13,fontWeight:900,color:"#fff",letterSpacing:2,fontFamily:"'Bebas Neue',cursive"}}>📺 PLACAR AO VIVO</span>
+            </a>
+          </div>
         </div>
         <div style={{position:"absolute", bottom:0, left:0, right:0, height:60, background:"linear-gradient(transparent,#0a0f00)", pointerEvents:"none"}}/>
       </div>
