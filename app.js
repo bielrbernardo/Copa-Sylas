@@ -13,14 +13,27 @@ function propagate(rounds) {
   for(let ri=0;ri<r.length-1;ri++) {
     const cur=r[ri].matches;
     const nxt=r[ri+1].matches;
-    for(let mi=0;mi<cur.length;mi++) {
-      if(!cur[mi].winner) continue;
-      const slot = Math.floor(mi/2);
-      if(slot >= nxt.length) continue;
-      // Par (0,2,4...): p1 do slot destino
-      // Ímpar (1,3,5...): p2 do slot destino
-      if(mi%2===0) nxt[slot].p1 = cur[mi].winner;
-      else         nxt[slot].p2 = cur[mi].winner;
+    const curLen=cur.length;
+    const nxtLen=nxt.length;
+
+    for(let mi=0;mi<curLen;mi++) {
+      const w = cur[mi].winner || cur[mi].p1; // Fase Inicial: p1 sozinho avança
+      if(!w) continue;
+
+      // Caso especial: Fase Inicial (20 cards individuais) → Oitavas (10 jogos)
+      // Cada par (0,1), (2,3)... forma um jogo nas oitavas
+      if(curLen === nxtLen*2 || curLen > nxtLen) {
+        const slot = Math.floor(mi/2);
+        if(slot >= nxtLen) continue;
+        if(mi%2===0) nxt[slot].p1 = cur[mi].p1||cur[mi].winner;
+        else         nxt[slot].p2 = cur[mi].p1||cur[mi].winner;
+      } else {
+        // Caso normal: par de vencedores forma próximo jogo
+        const slot = Math.floor(mi/2);
+        if(slot >= nxtLen) continue;
+        if(mi%2===0) nxt[slot].p1 = cur[mi].winner;
+        else         nxt[slot].p2 = cur[mi].winner;
+      }
     }
   }
   return r;
@@ -223,6 +236,11 @@ function App() {
           </div>
         )}
         <div style={{display:"flex",alignItems:"center",gap:8,flexShrink:0}}>
+          <a href="placar.html" target="_blank" rel="noopener"
+            style={{display:"flex",alignItems:"center",gap:5,background:"rgba(0,156,59,.15)",border:"1px solid rgba(0,156,59,.4)",borderRadius:6,padding:"5px 10px",color:MGREEN,fontSize:10,fontWeight:800,letterSpacing:1,textDecoration:"none",whiteSpace:"nowrap"}}>
+            <span style={{width:6,height:6,borderRadius:"50%",background:MGREEN,animation:"pulse 1s ease-in-out infinite",display:"inline-block"}}/>
+            AO VIVO
+          </a>
           <BRFlag size={isMobile?17:20} style={{animation:"floatUp 2.5s ease-in-out infinite",borderRadius:2}}/>
         </div>
       </header>
