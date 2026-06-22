@@ -11,41 +11,41 @@ const INITIAL = window.INITIAL;
 function propagate(rounds) {
   try {
     const r = rounds.map(rn=>({...rn, matches:rn.matches.map(m=>({...m}))}));
+
     for(let ri=0; ri<r.length-1; ri++) {
       const cur = r[ri].matches;
-      const nxt = r[ri+1].matches;
 
-      // Fase Inicial → Oitavas: 20 cards individuais (p2=null) viram 10 jogos
-      // Cada par de cards (0,1), (2,3)... forma um confronto nas oitavas
-      if(cur.length === nxt.length * 2) {
-        cur.forEach((m, mi) => {
-          const slot = Math.floor(mi/2);
-          if(slot >= nxt.length) return;
-          // Pega o nome do jogador (p1 é o único campo preenchido na fase inicial)
-          const nome = m.p1;
-          if(!nome) return;
-          if(mi%2===0) nxt[slot] = {...nxt[slot], p1: nome};
-          else         nxt[slot] = {...nxt[slot], p2: nome};
+      // Fase Inicial → Oitavas (20→10): copia nomes, não winners
+      if(cur.length === r[ri+1].matches.length * 2) {
+        r[ri+1].matches.forEach((_,si)=>{
+          r[ri+1].matches[si] = {...r[ri+1].matches[si], p1:null, p2:null};
         });
-        continue; // Não propaga winner da fase inicial (não existe winner ainda)
+        cur.forEach((m,mi)=>{
+          const slot = Math.floor(mi/2);
+          if(slot >= r[ri+1].matches.length || !m.p1) return;
+          if(mi%2===0) r[ri+1].matches[slot].p1 = m.p1;
+          else         r[ri+1].matches[slot].p2 = m.p1;
+        });
+        continue;
       }
 
-      // Caso normal: vencedor de par (mi=0,1) → próxima fase slot
-      // Oitavas(10)→Quartas(5): slot = floor(mi/2), mas 10/2=5 ✅
-      // Quartas(5)→Semi(2): slot = floor(mi/2) → 0,0,1,1,2 — slot 2 não existe!
-      // Então o 5º jogo das quartas vai para semifinal como jogo extra
-      cur.forEach((m, mi) => {
+      // Fases normais: LIMPA p1/p2 da próxima fase e repropaga do zero
+      // Isso garante que trocar vencedor atualiza corretamente
+      r[ri+1].matches.forEach((_,si)=>{
+        r[ri+1].matches[si] = {...r[ri+1].matches[si], p1:null, p2:null};
+      });
+      cur.forEach((m,mi)=>{
         if(!m.winner) return;
         const slot = Math.floor(mi/2);
-        if(slot >= nxt.length) return;
-        if(mi%2===0) nxt[slot] = {...nxt[slot], p1: m.winner};
-        else         nxt[slot] = {...nxt[slot], p2: m.winner};
+        if(slot >= r[ri+1].matches.length) return;
+        if(mi%2===0) r[ri+1].matches[slot].p1 = m.winner;
+        else         r[ri+1].matches[slot].p2 = m.winner;
       });
     }
     return r;
   } catch(e) {
     console.error('propagate error:', e);
-    return rounds; // Retorna original sem alterar se der erro
+    return rounds;
   }
 }
 window.propagate = propagate;
