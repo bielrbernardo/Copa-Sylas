@@ -8,7 +8,7 @@ const M_COLOR = window.M_COLOR;
 const F_COLOR = window.F_COLOR;
 
 // ─── CONSTANTES DE LAYOUT ─────────────────────────────────────────────────────
-const CARD_H=74, CARD_W=188, H_GAP=36, V_GAP=10;
+const CARD_H=80, CARD_W=200, H_GAP=40, V_GAP=12;
 
 function getMatchY(ri, mi, rounds) {
   if(rounds && rounds[0] && rounds[1] && rounds[0].matches.length < rounds[1].matches.length && ri===0) {
@@ -18,38 +18,115 @@ function getMatchY(ri, mi, rounds) {
   return (f-1)*(CARD_H+V_GAP)/2 + mi*f*(CARD_H+V_GAP);
 }
 
+// ─── LINHA DO CARD (um jogador) ───────────────────────────────────────────────
+function PlayerRow({ name, isWinner, gc, canEdit, onClick, showDivider }) {
+  const isBye = name === "BYE";
+  const isEmpty = !name;
+  return (
+    <div
+      onClick={canEdit && name && !isBye ? onClick : undefined}
+      style={{
+        height: "50%",
+        padding: "0 12px",
+        display: "flex",
+        alignItems: "center",
+        gap: 8,
+        borderBottom: showDivider ? "1px solid rgba(255,255,255,.06)" : "none",
+        background: isWinner ? `${gc}22` : "transparent",
+        cursor: canEdit && name && !isBye ? "pointer" : "default",
+        transition: "background .15s",
+        userSelect: "none",
+      }}
+    >
+      {/* Indicador de winner */}
+      <div style={{
+        width: 16, height: 16, borderRadius: "50%", flexShrink: 0,
+        background: isWinner ? gc : "rgba(255,255,255,.06)",
+        display: "flex", alignItems: "center", justifyContent: "center",
+        fontSize: 8, color: "#0a0f00", fontWeight: 900,
+        transition: "background .15s",
+        boxShadow: isWinner ? `0 0 8px ${gc}88` : "none",
+      }}>
+        {isWinner ? "✓" : ""}
+      </div>
+      <span style={{
+        flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
+        fontSize: 12, fontWeight: isWinner ? 700 : 400,
+        color: isWinner ? gc : isEmpty ? "rgba(255,255,255,.18)" : isBye ? "#475569" : "#cbd5e1",
+        letterSpacing: isWinner ? .3 : 0,
+        transition: "color .15s",
+      }}>
+        {name || "—"}
+      </span>
+      {isBye && <span style={{fontSize:9,color:"#334155",fontWeight:600}}>BYE</span>}
+    </div>
+  );
+}
+
 // ─── CARD DE CONFRONTO ────────────────────────────────────────────────────────
 function MatchCard({ match, gc, canEdit, onWin, onEdit }) {
-  const soloCard = match.p1 && !match.p2; // Fase Inicial: só p1
+  const soloCard = match.p1 && !match.p2;
+  const isEmpty  = !match.p1 && !match.p2;
+  const isWon    = !!match.winner;
+
   return (
-    <div style={{background:"rgba(255,255,255,.04)", border:`1px solid ${match.winner?"rgba(255,223,0,.2)":"rgba(255,255,255,.08)"}`, borderRadius:8, overflow:"hidden", minWidth:185, position:"relative", opacity:(!match.p1&&!match.p2)?.38:1}}>
-      {canEdit&&<button onClick={()=>onEdit(match)} style={{position:"absolute", top:3, right:3, background:"none", border:"none", color:"rgba(255,255,255,.25)", cursor:"pointer", fontSize:11, zIndex:1}}>✏️</button>}
+    <div style={{
+      background: isEmpty ? "rgba(255,255,255,.02)" : "rgba(10,20,40,.6)",
+      border: `1px solid ${isWon ? gc+"55" : "rgba(255,255,255,.09)"}`,
+      borderRadius: 8,
+      overflow: "hidden",
+      position: "relative",
+      opacity: isEmpty ? .3 : 1,
+      boxShadow: isWon ? `0 0 16px ${gc}22, inset 0 0 0 1px ${gc}22` : "none",
+      backdropFilter: "blur(4px)",
+      transition: "box-shadow .2s, border-color .2s",
+    }}>
+      {canEdit && (
+        <button onClick={()=>onEdit(match)} style={{
+          position:"absolute", top:3, right:3, zIndex:1,
+          background:"rgba(0,0,0,.4)", border:"none", borderRadius:3,
+          color:"rgba(255,255,255,.35)", cursor:"pointer", fontSize:10,
+          padding:"1px 5px", lineHeight:"16px",
+        }}>✏</button>
+      )}
+
       {soloCard ? (
-        // Card da Fase Inicial — só um jogador, clicável para avançar
-        <div className="mrow"
-          onClick={()=>canEdit&&match.p1&&onWin(match.id,match.p1)}
-          style={{height:CARD_H, padding:"0 10px", display:"flex", alignItems:"center", gap:6,
-            background:match.winner===match.p1?`${gc}28`:"transparent",
-            cursor:canEdit&&match.p1?"pointer":"default",
-            color:match.winner===match.p1?gc:match.p1?"#e2e8f0":"rgba(255,255,255,.2)",
-            fontWeight:match.winner===match.p1?800:400, fontSize:13}}>
-          {match.winner===match.p1&&<div style={{width:14,height:14,borderRadius:"50%",background:gc,display:"flex",alignItems:"center",justifyContent:"center",fontSize:8,color:"#0a0f00",fontWeight:900,flexShrink:0}}>✓</div>}
-          <span style={{flex:1,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{match.p1||"—"}</span>
+        // Fase Inicial — card de um jogador só
+        <div
+          onClick={()=>canEdit && match.p1 && onWin(match.id, match.p1)}
+          style={{
+            height: CARD_H, padding: "0 12px",
+            display: "flex", alignItems: "center", gap: 8,
+            background: match.winner ? `${gc}22` : "transparent",
+            cursor: canEdit && match.p1 ? "pointer" : "default",
+          }}
+        >
+          <div style={{
+            width:16, height:16, borderRadius:"50%", flexShrink:0,
+            background: match.winner ? gc : "rgba(255,255,255,.06)",
+            display:"flex", alignItems:"center", justifyContent:"center",
+            fontSize:8, color:"#0a0f00", fontWeight:900,
+            boxShadow: match.winner ? `0 0 8px ${gc}88` : "none",
+          }}>{match.winner ? "✓" : ""}</div>
+          <span style={{
+            flex:1, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap",
+            fontSize:13, fontWeight: match.winner ? 700 : 400,
+            color: match.winner ? gc : "#cbd5e1",
+          }}>{match.p1 || "—"}</span>
         </div>
       ) : (
-        [match.p1,match.p2].map((n,pi)=>(
-          <div key={pi} className="mrow" onClick={()=>canEdit&&n&&n!=="BYE"&&onWin(match.id,n)}
-            style={{height:"50%", padding:"0 10px", display:"flex", alignItems:"center", gap:6,
-              borderBottom:pi===0?"1px solid rgba(255,255,255,.07)":"none",
-              background:match.winner===n?`${gc}28`:"transparent",
-              cursor:canEdit&&n&&n!=="BYE"?"pointer":"default",
-              color:match.winner===n?gc:n&&n!=="BYE"?"#e2e8f0":"rgba(255,255,255,.2)",
-              fontWeight:match.winner===n?800:400, fontSize:12}}>
-            {match.winner===n&&<div style={{width:14,height:14,borderRadius:"50%",background:gc,display:"flex",alignItems:"center",justifyContent:"center",fontSize:8,color:"#0a0f00",fontWeight:900,flexShrink:0}}>✓</div>}
-            <span style={{flex:1,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{n||"—"}</span>
-            {n==="BYE"&&<span style={{fontSize:9,color:"#64748b"}}>bye</span>}
-          </div>
-        ))
+        <>
+          <PlayerRow
+            name={match.p1} isWinner={match.winner===match.p1}
+            gc={gc} canEdit={canEdit} showDivider
+            onClick={()=>onWin(match.id, match.p1)}
+          />
+          <PlayerRow
+            name={match.p2} isWinner={match.winner===match.p2}
+            gc={gc} canEdit={canEdit} showDivider={false}
+            onClick={()=>onWin(match.id, match.p2)}
+          />
+        </>
       )}
     </div>
   );
@@ -57,36 +134,37 @@ function MatchCard({ match, gc, canEdit, onWin, onEdit }) {
 
 // ─── BRACKET COM LINHAS SVG ───────────────────────────────────────────────────
 function Bracket({ rounds, gc, canEdit, onWin, onEdit, onAddMatch, onRename, onAddRound, onRemoveRound, onMoveRound }) {
-  const champ=rounds[rounds.length-1]?.matches[0]?.winner;
+  const champ = rounds[rounds.length-1]?.matches[0]?.winner;
   const maxMatches = Math.max(...rounds.map(r=>r.matches.length));
-  const totalH = maxMatches*(CARD_H+V_GAP)+80;
-  const totalW = rounds.length*(CARD_W+H_GAP)+(champ?230:40)+(canEdit?60:0);
+  const totalH = maxMatches*(CARD_H+V_GAP) + 80;
+  const totalW = rounds.length*(CARD_W+H_GAP) + (champ?240:40) + (canEdit?60:0);
+
   return (
     <div style={{overflowX:"auto", overflowY:"hidden", paddingBottom:24, WebkitOverflowScrolling:"touch", touchAction:"pan-x"}}>
       <div style={{position:"relative", width:totalW, height:totalH}}>
 
         {/* Linhas SVG conectoras */}
-        <svg style={{position:"absolute", inset:0, width:"100%", height:"100%", pointerEvents:"none", overflow:"visible"}}>
+        <svg style={{position:"absolute",inset:0,width:"100%",height:"100%",pointerEvents:"none",overflow:"visible"}}>
           {rounds.map((round,ri)=>{
             if(ri===rounds.length-1) return null;
             return round.matches.map((match,mi)=>{
-              const x1=ri*(CARD_W+H_GAP)+CARD_W;
-              const y1=getMatchY(ri,mi,rounds)+CARD_H/2+24;
+              const x1 = ri*(CARD_W+H_GAP)+CARD_W;
+              const y1 = getMatchY(ri,mi,rounds)+CARD_H/2+24;
               const isPlayIn = round.matches.length < rounds[ri+1].matches.length;
               const nmi = isPlayIn ? mi*2 : Math.floor(mi/2);
-              const x2=(ri+1)*(CARD_W+H_GAP);
-              const y2=getMatchY(ri+1,nmi,rounds)+CARD_H/2+24;
-              const mx=x1+H_GAP/2;
-              const won=match.winner!==null;
-              const lc=won?gc:"rgba(255,255,255,.1)";
-              const sw=won?2:1.5;
-              const da=won?"none":"5,4";
+              const x2 = (ri+1)*(CARD_W+H_GAP);
+              const y2 = getMatchY(ri+1,nmi,rounds)+CARD_H/2+24;
+              const mx = x1+H_GAP/2;
+              const won = !!match.winner;
+              const lc  = won ? gc : "rgba(255,255,255,.1)";
+              const sw  = won ? 2 : 1.5;
+              const da  = won ? "none" : "4,4";
               return (
                 <g key={match.id}>
                   <line x1={x1} y1={y1} x2={mx} y2={y1} stroke={lc} strokeWidth={sw} strokeDasharray={da}/>
                   <line x1={mx} y1={y1} x2={mx} y2={y2} stroke={lc} strokeWidth={sw} strokeDasharray={da}/>
                   <line x1={mx} y1={y2} x2={x2} y2={y2} stroke={lc} strokeWidth={sw} strokeDasharray={da}/>
-                  {won&&<circle cx={x2} cy={y2} r={3.5} fill={gc}/>}
+                  {won && <circle cx={x2} cy={y2} r={4} fill={gc} opacity={.9}/>}
                 </g>
               );
             });
@@ -96,50 +174,55 @@ function Bracket({ rounds, gc, canEdit, onWin, onEdit, onAddMatch, onRename, onA
         {/* Cards por fase */}
         {rounds.map((round,ri)=>(
           <div key={round.id}>
-            {/* Label da fase + botões reordenar */}
-            <div style={{position:"absolute", left:ri*(CARD_W+H_GAP), top:0, width:CARD_W, display:"flex", alignItems:"center", justifyContent:"center", gap:3}}>
-              {canEdit&&ri>0&&<button onClick={()=>onMoveRound(round.id,"left")} style={{background:"none",border:"none",color:`${gc}88`,cursor:"pointer",fontSize:12,padding:"0 2px"}}>◀</button>}
-              {canEdit
-                ?<input value={round.name} onChange={e=>onRename(round.id,e.target.value)}
-                    style={{background:"transparent",border:"none",borderBottom:`1px solid ${gc}44`,color:gc,fontSize:9,fontWeight:800,letterSpacing:2,textTransform:"uppercase",outline:"none",fontFamily:"'Inter',sans-serif",width:"60%",padding:"2px 0",textAlign:"center"}}/>
-                :<span style={{fontSize:9,fontWeight:800,letterSpacing:2,textTransform:"uppercase",color:gc,padding:"3px 10px",background:`${gc}14`,borderRadius:4,display:"inline-block"}}>{round.name}</span>
-              }
-              {canEdit&&ri<rounds.length-1&&<button onClick={()=>onMoveRound(round.id,"right")} style={{background:"none",border:"none",color:`${gc}88`,cursor:"pointer",fontSize:12,padding:"0 2px"}}>▶</button>}
-              {canEdit&&<button onClick={()=>onRemoveRound(round.id)} style={{background:"none",border:"none",color:"#ef4444",cursor:"pointer",fontSize:11,padding:"0 2px"}}>🗑</button>}
+            {/* Label da fase */}
+            <div style={{position:"absolute", left:ri*(CARD_W+H_GAP), top:0, width:CARD_W,
+              display:"flex", alignItems:"center", justifyContent:"center", gap:3}}>
+              {canEdit&&ri>0&&(
+                <button onClick={()=>onMoveRound(round.id,"left")}
+                  style={{background:"none",border:"none",color:`${gc}77`,cursor:"pointer",fontSize:11,padding:"0 2px"}}>◀</button>
+              )}
+              {canEdit ? (
+                <input value={round.name} onChange={e=>onRename(round.id,e.target.value)}
+                  style={{background:"transparent",border:"none",borderBottom:`1px solid ${gc}33`,
+                    color:gc,fontSize:9,fontWeight:700,letterSpacing:2,textTransform:"uppercase",
+                    outline:"none",fontFamily:"'Inter',sans-serif",width:"62%",
+                    padding:"2px 0",textAlign:"center"}}/>
+              ) : (
+                <span style={{fontSize:9,fontWeight:700,letterSpacing:2,textTransform:"uppercase",
+                  color:gc,padding:"3px 10px",background:`${gc}14`,borderRadius:4,display:"inline-block"}}>
+                  {round.name}
+                </span>
+              )}
+              {canEdit&&ri<rounds.length-1&&(
+                <button onClick={()=>onMoveRound(round.id,"right")}
+                  style={{background:"none",border:"none",color:`${gc}77`,cursor:"pointer",fontSize:11,padding:"0 2px"}}>▶</button>
+              )}
+              {canEdit&&(
+                <button onClick={()=>onRemoveRound(round.id)}
+                  style={{background:"none",border:"none",color:"#ef4444",cursor:"pointer",fontSize:10,padding:"0 2px"}}>✕</button>
+              )}
             </div>
 
             {round.matches.map((match,mi)=>{
-              const x=ri*(CARD_W+H_GAP);
-              const y=getMatchY(ri,mi,rounds)+24;
-              const isEmpty=!match.p1&&!match.p2;
+              const x = ri*(CARD_W+H_GAP);
+              const y = getMatchY(ri,mi,rounds)+24;
               return (
-                <div key={match.id} style={{position:"absolute", left:x, top:y, width:CARD_W, height:CARD_H,
-                  background:isEmpty?"rgba(255,255,255,.02)":"rgba(255,255,255,.05)",
-                  border:`1px solid ${match.winner?gc+"55":"rgba(255,255,255,.1)"}`,
-                  borderRadius:8, overflow:"hidden", opacity:isEmpty?.3:1,
-                  boxShadow:match.winner?`0 0 14px ${gc}22`:"none"}}>
-                  {canEdit&&<button onClick={()=>onEdit(match)}
-                    style={{position:"absolute",top:3,right:3,background:"rgba(0,0,0,.3)",border:"none",color:"rgba(255,255,255,.5)",cursor:"pointer",fontSize:10,zIndex:1,borderRadius:3,padding:"1px 4px"}}>✏️</button>}
-                  {[match.p1,match.p2].map((n,pi)=>(
-                    <div key={pi} className="mrow" onClick={()=>canEdit&&n&&n!=="BYE"&&onWin(match.id,n)}
-                      style={{height:"50%", padding:"0 10px", display:"flex", alignItems:"center", gap:6,
-                        borderBottom:pi===0?"1px solid rgba(255,255,255,.07)":"none",
-                        background:match.winner===n?`${gc}28`:"transparent",
-                        cursor:canEdit&&n&&n!=="BYE"?"pointer":"default",
-                        color:match.winner===n?gc:n&&n!=="BYE"?"#e2e8f0":"rgba(255,255,255,.2)",
-                        fontWeight:match.winner===n?800:400, fontSize:12}}>
-                      {match.winner===n&&<div style={{width:14,height:14,borderRadius:"50%",background:gc,display:"flex",alignItems:"center",justifyContent:"center",fontSize:8,color:"#0a0f00",fontWeight:900,flexShrink:0}}>✓</div>}
-                      <span style={{flex:1,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{n||"—"}</span>
-                      {n==="BYE"&&<span style={{fontSize:9,color:"#64748b"}}>bye</span>}
-                    </div>
-                  ))}
+                <div key={match.id} style={{position:"absolute", left:x, top:y, width:CARD_W, height:CARD_H}}>
+                  <MatchCard match={match} gc={gc} canEdit={canEdit}
+                    onWin={onWin} onEdit={onEdit}/>
                 </div>
               );
             })}
 
             {canEdit&&(
-              <div style={{position:"absolute", left:ri*(CARD_W+H_GAP), top:getMatchY(ri,round.matches.length,rounds)+24+CARD_H+6}}>
-                <button onClick={()=>onAddMatch(round.id)} style={{background:"transparent",border:`1px dashed ${gc}44`,borderRadius:6,padding:"4px 8px",color:`${gc}77`,fontSize:10,cursor:"pointer",fontFamily:"'Inter',sans-serif",width:CARD_W}}>+ confronto</button>
+              <div style={{position:"absolute", left:ri*(CARD_W+H_GAP),
+                top:getMatchY(ri,round.matches.length,rounds)+24+CARD_H+6}}>
+                <button onClick={()=>onAddMatch(round.id)} style={{
+                  background:"transparent", border:`1px dashed ${gc}33`,
+                  borderRadius:6, padding:"4px 8px",
+                  color:`${gc}66`, fontSize:10, cursor:"pointer",
+                  fontFamily:"'Inter',sans-serif", width:CARD_W,
+                }}>+ confronto</button>
               </div>
             )}
           </div>
@@ -147,19 +230,33 @@ function Bracket({ rounds, gc, canEdit, onWin, onEdit, onAddMatch, onRename, onA
 
         {/* Botão nova fase */}
         {canEdit&&(
-          <div style={{position:"absolute", left:rounds.length*(CARD_W+H_GAP)+4, top:getMatchY(0,0,rounds)+24}}>
-            <button onClick={onAddRound} style={{background:"transparent",border:"1px dashed rgba(255,223,0,.28)",borderRadius:8,padding:"12px 9px",color:"rgba(255,223,0,.45)",fontSize:10,cursor:"pointer",fontFamily:"'Inter',sans-serif",writingMode:"vertical-rl"}}>+ Fase</button>
+          <div style={{position:"absolute", left:rounds.length*(CARD_W+H_GAP)+4,
+            top:getMatchY(0,0,rounds)+24}}>
+            <button onClick={onAddRound} style={{
+              background:"transparent", border:"1px dashed rgba(255,223,0,.22)",
+              borderRadius:8, padding:"12px 9px",
+              color:"rgba(255,223,0,.4)", fontSize:10, cursor:"pointer",
+              fontFamily:"'Inter',sans-serif", writingMode:"vertical-rl",
+            }}>+ Fase</button>
           </div>
         )}
 
         {/* Campeão */}
         {champ&&(
-          <div style={{position:"absolute", left:rounds.length*(CARD_W+H_GAP)+(canEdit?52:8), top:getMatchY(rounds.length-1,0,rounds)+24, display:"flex", flexDirection:"column", alignItems:"center", gap:6}}>
-            <div style={{fontSize:9,fontWeight:800,letterSpacing:3,color:MGOLD}}>★ CAMPEÃO ★</div>
-            <div style={{background:"linear-gradient(135deg,#FFDF00,#FFB800,#cc8800)",color:"#0a0f00",borderRadius:10,padding:"13px 18px",fontWeight:900,fontSize:14,boxShadow:"0 0 28px rgba(255,223,0,.45)",border:"2px solid rgba(255,255,255,.25)",whiteSpace:"nowrap",textAlign:"center"}}>
-              🏆 {champ}
-            </div>
-            <div style={{fontSize:12,color:"rgba(255,223,0,.35)"}}>★ ★ ★ ★ ★</div>
+          <div style={{position:"absolute",
+            left:rounds.length*(CARD_W+H_GAP)+(canEdit?52:8),
+            top:getMatchY(rounds.length-1,0,rounds)+24,
+            display:"flex", flexDirection:"column", alignItems:"center", gap:8}}>
+            <div style={{fontSize:9,fontWeight:700,letterSpacing:3,color:MGOLD,opacity:.7}}>★ CAMPEÃO ★</div>
+            <div style={{
+              background:"linear-gradient(135deg,#FFDF00,#FFB800,#cc8800)",
+              color:"#0a0f00", borderRadius:10, padding:"12px 20px",
+              fontWeight:900, fontSize:14,
+              boxShadow:"0 0 32px rgba(255,223,0,.4), 0 4px 20px rgba(0,0,0,.4)",
+              border:"2px solid rgba(255,255,255,.2)",
+              whiteSpace:"nowrap", textAlign:"center",
+            }}>🏆 {champ}</div>
+            <div style={{fontSize:11,color:"rgba(255,223,0,.3)"}}>★ ★ ★ ★ ★</div>
           </div>
         )}
       </div>
@@ -351,10 +448,19 @@ function GeradorChave({ mod, onSalvar, onClose, defaultCat, isNivel }) {
 }
 
 // Expõe globalmente
-window.MatchCard   = MatchCard;
-window.Bracket     = Bracket;
-window.EditModal   = EditModal;
-window.BulkModal   = BulkModal;
+window.MatchCard    = MatchCard;
+window.Bracket      = Bracket;
+window.EditModal    = EditModal;
+window.BulkModal    = BulkModal;
 window.GeradorChave = GeradorChave;
-window.getMatchY   = getMatchY;
+window.getMatchY    = getMatchY;
 window.CARD_H=CARD_H; window.CARD_W=CARD_W; window.H_GAP=H_GAP; window.V_GAP=V_GAP;
+
+
+function getMatchY(ri, mi, rounds) {
+  if(rounds && rounds[0] && rounds[1] && rounds[0].matches.length < rounds[1].matches.length && ri===0) {
+    return mi * (CARD_H+V_GAP) * 2 + (CARD_H+V_GAP) / 2;
+  }
+  const f = Math.pow(2, ri);
+  return (f-1)*(CARD_H+V_GAP)/2 + mi*f*(CARD_H+V_GAP);
+}
