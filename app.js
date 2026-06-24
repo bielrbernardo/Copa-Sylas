@@ -19,6 +19,7 @@ function propagate(rounds) {
       if(cur.length === r[ri+1].matches.length * 2) {
         r[ri+1].matches.forEach((_,si)=>{
           r[ri+1].matches[si] = {...r[ri+1].matches[si], p1:null, p2:null};
+          // NÃO zera winner aqui — as Oitavas podem ter resultados próprios
         });
         cur.forEach((m,mi)=>{
           const slot = Math.floor(mi/2);
@@ -26,13 +27,19 @@ function propagate(rounds) {
           if(mi%2===0) r[ri+1].matches[slot].p1 = m.p1;
           else         r[ri+1].matches[slot].p2 = m.p1;
         });
+        // Se o jogador que entrou nas Oitavas mudou, zera o winner daquela partida
+        r[ri+1].matches.forEach((m,si)=>{
+          if(m.winner && m.winner !== m.p1 && m.winner !== m.p2) {
+            r[ri+1].matches[si] = {...r[ri+1].matches[si], winner:null};
+          }
+        });
         continue;
       }
 
-      // Fases normais: LIMPA p1/p2 da próxima fase e repropaga do zero
-      // Isso garante que trocar vencedor atualiza corretamente
+      // Fases normais: LIMPA p1/p2/winner da próxima fase e repropaga do zero
+      // winner:null é essencial — sem isso o winner antigo fica e cascateia até o campeão
       r[ri+1].matches.forEach((_,si)=>{
-        r[ri+1].matches[si] = {...r[ri+1].matches[si], p1:null, p2:null};
+        r[ri+1].matches[si] = {...r[ri+1].matches[si], p1:null, p2:null, winner:null};
       });
       cur.forEach((m,mi)=>{
         if(!m.winner) return;
