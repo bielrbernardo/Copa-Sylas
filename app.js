@@ -8,49 +8,93 @@ const MGREEN  = window.MGREEN;
 const INITIAL = window.INITIAL;
 
 // ─── PROPAGAR VENCEDORES ENTRE FASES ─────────────────────────────────────────
-// Lógica:
-// 1. Itera fase por fase da esquerda pra direita
-// 2. Para cada fase, recalcula p1/p2 da próxima fase com base nos winners atuais
-// 3. Se algum jogador mudou em relação ao que estava antes → zera o winner da
-//    partida na próxima fase (invalida resultado que já não faz sentido)
-// 4. Isso se propaga naturalmente: sem winner nas Quartas, a Semifinal fica sem
-//    p1/p2 e winner, e assim por diante até o Final
+// Estratégia em 2 passos:
+//
+// PASSO 1 — Detecta quais matches tiveram winner alterado comparando com o
+//   snapshot original. Marca esses matches como "sujos" e, em cascata, marca
+//   também todos os matches das fases seguintes que dependem deles.
+//
+// PASSO 2 — Reconstrói p1/p2 de cada fase a partir dos winners da fase anterior.
+//   Matches marcados como sujos têm seu winner zerado.
+//
+// Isso garante que trocar um resultado em qualquer fase invalida corretamente
+// todos os resultados dependentes até o campeão, sem cascatear winners antigos.
 function propagate(rounds) {
   try {
+    // Deep clone
     const r = rounds.map(rn=>({...rn, matches:rn.matches.map(m=>({...m}))}));
+
+    // PASSO 1: detecta matches com winner alterado e propaga "sujeira" em cascata
+    // Constrói mapa: matchId → índice de fase e índice no array
+    const matchPos = {};
+    r.forEach((rnd,ri)=>rnd.matches.forEach((m,mi)=>{ matchPos[m.id]={ri,mi}; }));
+
+    // Para cada fase (exceto a última), verifica se algum winner da fase atual
+    // vai alterar quem participa na fase seguinte → se sim, marca o match
+    // da fase seguinte como sujo (winner deve ser zerado)
+    const dirty = new Set(); // conjunto de match.id sujos
 
     for(let ri=0; ri<r.length-1; ri++) {
       const cur = r[ri].matches;
       const nxt = r[ri+1].matches;
+      const isFaseInicial = cur.length === nxt.length * 2;
 
-      // Guarda quem estava em cada slot da próxima fase ANTES de recalcular
-      const prevP1 = nxt.map(m=>m.p1);
-      const prevP2 = nxt.map(m=>m.p2);
-
-      // Zera p1/p2 da próxima fase para recalcular do zero
-      nxt.forEach((_,si)=>{ r[ri+1].matches[si] = {...r[ri+1].matches[si], p1:null, p2:null}; });
-
-      // Fase Inicial → Oitavas (20→10): copia o nome do jogador, não o winner
-      const isFaseInicial = (cur.length === nxt.length * 2);
       cur.forEach((m,mi)=>{
         const slot = Math.floor(mi/2);
-        if(slot >= r[ri+1].matches.length) return;
+        if(slot >= nxt.length) return;
+        const nxtMatch = nxt[slot];
+
+        if(isFaseInicial) {
+          // Fase Inicial: o jogador é m.p1 (não winner)
+          // Se o nome mudou em relação ao que está registrado em p1 ou p2 da oitava
+          const expectedField = mi%2===0 ? nxtMatch.p1 : nxtMatch.p2;
+          if(m.p1 !== expectedField) dirty.add(nxtMatch.id);
+        } else {
+          // Fases normais: propaga winner
+          // Se o winner mudou (ou sumiu), o match destino fica sujo
+          const expectedField = mi%2===0 ? nxtMatch.p1 : nxtMatch.p2;
+          if((m.winner||null) !== (expectedField||null)) dirty.add(nxtMatch.id);
+        }
+      });
+
+      // Propaga sujeira: se um match da próxima fase está sujo,
+      // o match que ele alimentaria também fica sujo
+      if(ri+1 < r.length-1) {
+        nxt.forEach((m,mi)=>{
+          if(!dirty.has(m.id)) return;
+          const slot = Math.floor(mi/2);
+          const nxt2 = r[ri+2].matches;
+          if(slot < nxt2.length) dirty.add(nxt2[slot].id);
+        });
+      }
+    }
+
+    // PASSO 2: reconstrói p1/p2 de cada fase seguinte e zera winner dos sujos
+    for(let ri=0; ri<r.length-1; ri++) {
+      const cur = r[ri].matches;
+      const nxt = r[ri+1].matches;
+      const isFaseInicial = cur.length === nxt.length * 2;
+
+      // Zera p1/p2 da próxima fase — vai recalcular do zero
+      nxt.forEach((_,si)=>{ r[ri+1].matches[si] = {...r[ri+1].matches[si], p1:null, p2:null}; });
+
+      cur.forEach((m,mi)=>{
+        const slot = Math.floor(mi/2);
+        if(slot >= nxt.length) return;
         const nome = isFaseInicial ? m.p1 : m.winner;
         if(!nome) return;
         if(mi%2===0) r[ri+1].matches[slot].p1 = nome;
         else         r[ri+1].matches[slot].p2 = nome;
       });
 
-      // Para cada partida da próxima fase: se algum jogador mudou, zera o winner
-      // (o resultado registrado não vale mais — os participantes mudaram)
-      r[ri+1].matches.forEach((m,si)=>{
-        const p1mudou = m.p1 !== prevP1[si];
-        const p2mudou = m.p2 !== prevP2[si];
-        if((p1mudou || p2mudou) && m.winner) {
+      // Zera winner dos matches sujos
+      nxt.forEach((m,si)=>{
+        if(dirty.has(m.id) && m.winner) {
           r[ri+1].matches[si] = {...r[ri+1].matches[si], winner:null};
         }
       });
     }
+
     return r;
   } catch(e) {
     console.error('propagate error:', e);
