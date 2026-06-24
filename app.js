@@ -8,45 +8,47 @@ const MGREEN  = window.MGREEN;
 const INITIAL = window.INITIAL;
 
 // ─── PROPAGAR VENCEDORES ENTRE FASES ─────────────────────────────────────────
+// Lógica:
+// 1. Itera fase por fase da esquerda pra direita
+// 2. Para cada fase, recalcula p1/p2 da próxima fase com base nos winners atuais
+// 3. Se algum jogador mudou em relação ao que estava antes → zera o winner da
+//    partida na próxima fase (invalida resultado que já não faz sentido)
+// 4. Isso se propaga naturalmente: sem winner nas Quartas, a Semifinal fica sem
+//    p1/p2 e winner, e assim por diante até o Final
 function propagate(rounds) {
   try {
     const r = rounds.map(rn=>({...rn, matches:rn.matches.map(m=>({...m}))}));
 
     for(let ri=0; ri<r.length-1; ri++) {
       const cur = r[ri].matches;
+      const nxt = r[ri+1].matches;
 
-      // Fase Inicial → Oitavas (20→10): copia nomes, não winners
-      if(cur.length === r[ri+1].matches.length * 2) {
-        r[ri+1].matches.forEach((_,si)=>{
-          r[ri+1].matches[si] = {...r[ri+1].matches[si], p1:null, p2:null};
-          // NÃO zera winner aqui — as Oitavas podem ter resultados próprios
-        });
-        cur.forEach((m,mi)=>{
-          const slot = Math.floor(mi/2);
-          if(slot >= r[ri+1].matches.length || !m.p1) return;
-          if(mi%2===0) r[ri+1].matches[slot].p1 = m.p1;
-          else         r[ri+1].matches[slot].p2 = m.p1;
-        });
-        // Se o jogador que entrou nas Oitavas mudou, zera o winner daquela partida
-        r[ri+1].matches.forEach((m,si)=>{
-          if(m.winner && m.winner !== m.p1 && m.winner !== m.p2) {
-            r[ri+1].matches[si] = {...r[ri+1].matches[si], winner:null};
-          }
-        });
-        continue;
-      }
+      // Guarda quem estava em cada slot da próxima fase ANTES de recalcular
+      const prevP1 = nxt.map(m=>m.p1);
+      const prevP2 = nxt.map(m=>m.p2);
 
-      // Fases normais: LIMPA p1/p2/winner da próxima fase e repropaga do zero
-      // winner:null é essencial — sem isso o winner antigo fica e cascateia até o campeão
-      r[ri+1].matches.forEach((_,si)=>{
-        r[ri+1].matches[si] = {...r[ri+1].matches[si], p1:null, p2:null, winner:null};
-      });
+      // Zera p1/p2 da próxima fase para recalcular do zero
+      nxt.forEach((_,si)=>{ r[ri+1].matches[si] = {...r[ri+1].matches[si], p1:null, p2:null}; });
+
+      // Fase Inicial → Oitavas (20→10): copia o nome do jogador, não o winner
+      const isFaseInicial = (cur.length === nxt.length * 2);
       cur.forEach((m,mi)=>{
-        if(!m.winner) return;
         const slot = Math.floor(mi/2);
         if(slot >= r[ri+1].matches.length) return;
-        if(mi%2===0) r[ri+1].matches[slot].p1 = m.winner;
-        else         r[ri+1].matches[slot].p2 = m.winner;
+        const nome = isFaseInicial ? m.p1 : m.winner;
+        if(!nome) return;
+        if(mi%2===0) r[ri+1].matches[slot].p1 = nome;
+        else         r[ri+1].matches[slot].p2 = nome;
+      });
+
+      // Para cada partida da próxima fase: se algum jogador mudou, zera o winner
+      // (o resultado registrado não vale mais — os participantes mudaram)
+      r[ri+1].matches.forEach((m,si)=>{
+        const p1mudou = m.p1 !== prevP1[si];
+        const p2mudou = m.p2 !== prevP2[si];
+        if((p1mudou || p2mudou) && m.winner) {
+          r[ri+1].matches[si] = {...r[ri+1].matches[si], winner:null};
+        }
       });
     }
     return r;
