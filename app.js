@@ -37,24 +37,15 @@ function propagate(rounds) {
     for(let ri=0; ri<r.length-1; ri++) {
       const cur = r[ri].matches;
       const nxt = r[ri+1].matches;
-      const isFaseInicial = cur.length === nxt.length * 2;
 
       cur.forEach((m,mi)=>{
         const slot = Math.floor(mi/2);
         if(slot >= nxt.length) return;
         const nxtMatch = nxt[slot];
 
-        if(isFaseInicial) {
-          // Fase Inicial: o jogador é m.p1 (não winner)
-          // Se o nome mudou em relação ao que está registrado em p1 ou p2 da oitava
-          const expectedField = mi%2===0 ? nxtMatch.p1 : nxtMatch.p2;
-          if(m.p1 !== expectedField) dirty.add(nxtMatch.id);
-        } else {
-          // Fases normais: propaga winner
-          // Se o winner mudou (ou sumiu), o match destino fica sujo
-          const expectedField = mi%2===0 ? nxtMatch.p1 : nxtMatch.p2;
-          if((m.winner||null) !== (expectedField||null)) dirty.add(nxtMatch.id);
-        }
+        // Fluxo Corrigido: Compara sempre com o vencedor da partida anterior
+        const expectedField = mi%2===0 ? nxtMatch.p1 : nxtMatch.p2;
+        if((m.winner||null) !== (expectedField||null)) dirty.add(nxtMatch.id);
       });
 
       // Propaga sujeira: se um match da próxima fase está sujo,
@@ -73,7 +64,6 @@ function propagate(rounds) {
     for(let ri=0; ri<r.length-1; ri++) {
       const cur = r[ri].matches;
       const nxt = r[ri+1].matches;
-      const isFaseInicial = cur.length === nxt.length * 2;
 
       // Zera p1/p2 da próxima fase — vai recalcular do zero
       nxt.forEach((_,si)=>{ r[ri+1].matches[si] = {...r[ri+1].matches[si], p1:null, p2:null}; });
@@ -81,7 +71,9 @@ function propagate(rounds) {
       cur.forEach((m,mi)=>{
         const slot = Math.floor(mi/2);
         if(slot >= nxt.length) return;
-        const nome = isFaseInicial ? m.p1 : m.winner;
+        
+        // Fluxo Corrigido: Sempre avança o vencedor (winner) de forma uniforme
+        const nome = m.winner;
         if(!nome) return;
         if(mi%2===0) r[ri+1].matches[slot].p1 = nome;
         else         r[ri+1].matches[slot].p2 = nome;
