@@ -10,12 +10,18 @@ const F_COLOR = window.F_COLOR;
 // ─── CONSTANTES DE LAYOUT ─────────────────────────────────────────────────────
 const CARD_H=80, CARD_W=200, H_GAP=40, V_GAP=12;
 
+// Calcula a posição Y de cada card.
+// Estratégia: usa a fase com MAIS matches como referência (geralmente ri=0).
+// Cada card ocupa um "slot" proporcional ao espaçamento da fase maior.
 function getMatchY(ri, mi, rounds) {
-  if(rounds && rounds[0] && rounds[1] && rounds[0].matches.length < rounds[1].matches.length && ri===0) {
-    return mi * (CARD_H+V_GAP) * 2 + (CARD_H+V_GAP) / 2;
-  }
-  const f = Math.pow(2, ri);
-  return (f-1)*(CARD_H+V_GAP)/2 + mi*f*(CARD_H+V_GAP);
+  // Acha o número máximo de matches em qualquer fase
+  const maxM = Math.max(...rounds.map(r => r.matches.length));
+  const nMatches = rounds[ri].matches.length;
+  // Quantos slots da grade cada card ocupa
+  const slotsPerCard = maxM / nMatches;
+  // Centro do slot i
+  const slotH = CARD_H + V_GAP;
+  return (mi * slotsPerCard + (slotsPerCard - 1) / 2) * slotH;
 }
 
 // ─── LINHA DO CARD (um jogador) ───────────────────────────────────────────────
@@ -150,8 +156,12 @@ function Bracket({ rounds, gc, canEdit, onWin, onEdit, onAddMatch, onRename, onA
             return round.matches.map((match,mi)=>{
               const x1 = ri*(CARD_W+H_GAP)+CARD_W;
               const y1 = getMatchY(ri,mi,rounds)+CARD_H/2+24;
-              const isPlayIn = round.matches.length < rounds[ri+1].matches.length;
-              const nmi = isPlayIn ? mi*2 : Math.floor(mi/2);
+              // nmi: índice do match destino na próxima fase
+              // Se fase atual tem MAIS matches que a próxima → 2 cards alimentam 1 (normal)
+              // Se fase atual tem MENOS matches que a próxima → 1 card alimenta 2 (play-in)
+              const curLen = round.matches.length;
+              const nxtLen = rounds[ri+1].matches.length;
+              const nmi = curLen > nxtLen ? Math.floor(mi/2) : mi*2;
               const x2 = (ri+1)*(CARD_W+H_GAP);
               const y2 = getMatchY(ri+1,nmi,rounds)+CARD_H/2+24;
               const mx = x1+H_GAP/2;
@@ -455,12 +465,3 @@ window.BulkModal    = BulkModal;
 window.GeradorChave = GeradorChave;
 window.getMatchY    = getMatchY;
 window.CARD_H=CARD_H; window.CARD_W=CARD_W; window.H_GAP=H_GAP; window.V_GAP=V_GAP;
-
-
-function getMatchY(ri, mi, rounds) {
-  if(rounds && rounds[0] && rounds[1] && rounds[0].matches.length < rounds[1].matches.length && ri===0) {
-    return mi * (CARD_H+V_GAP) * 2 + (CARD_H+V_GAP) / 2;
-  }
-  const f = Math.pow(2, ri);
-  return (f-1)*(CARD_H+V_GAP)/2 + mi*f*(CARD_H+V_GAP);
-}
