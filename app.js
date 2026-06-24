@@ -114,9 +114,11 @@ function resetarResultados(data) {
           if(gVal.tipo==="roundrobin") return [gKey,{...gVal,
             rounds:gVal.rounds.map(r=>({...r,matches:r.matches.map(m=>({...m,winner:null,gols1:null,gols2:null}))}))
           }];
-          return [gKey,{...gVal,
-            rounds:gVal.rounds.map(r=>({...r,matches:r.matches.map(m=>({...m,winner:null}))}))
-          }];
+          // Zera winners e roda propagate para limpar p1/p2 das fases seguintes
+          const zerado = gVal.rounds.map(r=>({
+            ...r, matches:r.matches.map(m=>({...m,winner:null}))
+          }));
+          return [gKey,{...gVal, rounds:propagate(zerado)}];
         })
       )
     }))
