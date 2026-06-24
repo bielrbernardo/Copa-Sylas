@@ -8,9 +8,9 @@ const F_COLOR = window.F_COLOR;
 
 const CARD_H=74, CARD_W=188, H_GAP=36, V_GAP=10;
 
-// Calcula Y de cada card de forma uniforme:
+// Correção do Alinhamento Visual:
 // A fase com mais matches define a altura total.
-// Cada fase distribui seus cards igualmente nessa altura.
+// Cada fase distribui seus cards igualmente nessa altura de forma retilínea.
 function getMatchY(ri, mi, rounds) {
   const maxM = Math.max(...rounds.map(r => r.matches.length));
   const n    = rounds[ri].matches.length;
@@ -119,8 +119,6 @@ function Bracket({ rounds, gc, canEdit, onWin, onEdit, onAddMatch, onRename, onA
               const y1  = getMatchY(ri, mi, rounds) + CARD_H / 2 + 20;
               const curLen = round.matches.length;
               const nxtLen = rounds[ri + 1].matches.length;
-              // Se fase atual tem mais matches → 2 alimentam 1 (padrão)
-              // Se fase atual tem menos → 1 alimenta 2 (play-in, não usado no tênis)
               const nmi = curLen >= nxtLen ? Math.floor(mi / 2) : mi * 2;
               const x2  = (ri + 1) * (CARD_W + H_GAP);
               const y2  = getMatchY(ri + 1, nmi, rounds) + CARD_H / 2 + 20;
