@@ -152,6 +152,32 @@ INITIAL.mods[4].genders.misto = {
   classificacao: FUTSAL_TEAMS.map(t=>({time:t,j:0,v:0,e:0,d:0,gp:0,gc:0,pts:0})),
 };
 
+// Vôlei — Rodadas Round Robin (11 times, 11 rodadas, formato sets)
+const VOLEI_TEAMS = ["1ºA","2ºA","3ºA","6ºA","7ºA","8ºA","9ºA","1ºB","3ºB","8ºB","9ºB"];
+const VOLEI_ROUNDS = [
+  {name:"1ª Rodada",  folga:"6ºA", matches:[["7ºA","8ºA"],["8ºB","9ºA"],["9ºB","1ºA"],["1ºB","3ºA"],["3ºB","2ºA"]]},
+  {name:"2ª Rodada",  folga:"8ºA", matches:[["6ºA","9ºA"],["7ºA","1ºA"],["8ºB","3ºA"],["9ºB","2ºA"],["1ºB","3ºB"]]},
+  {name:"3ª Rodada",  folga:"9ºA", matches:[["8ºA","1ºA"],["6ºA","3ºA"],["7ºA","2ºA"],["8ºB","3ºB"],["9ºB","1ºB"]]},
+  {name:"4ª Rodada",  folga:"1ºA", matches:[["9ºA","3ºA"],["8ºA","2ºA"],["6ºA","3ºB"],["7ºA","1ºB"],["8ºB","9ºB"]]},
+  {name:"5ª Rodada",  folga:"3ºA", matches:[["1ºA","2ºA"],["9ºA","3ºB"],["8ºA","1ºB"],["6ºA","9ºB"],["7ºA","8ºB"]]},
+  {name:"6ª Rodada",  folga:"2ºA", matches:[["3ºA","3ºB"],["1ºA","1ºB"],["9ºA","9ºB"],["8ºA","8ºB"],["6ºA","7ºA"]]},
+  {name:"7ª Rodada",  folga:"3ºB", matches:[["2ºA","1ºB"],["3ºA","9ºB"],["1ºA","8ºB"],["9ºA","7ºA"],["1ºA","6ºA"]]},
+  {name:"8ª Rodada",  folga:"1ºB", matches:[["3ºB","9ºB"],["2ºA","8ºB"],["3ºA","7ºA"],["1ºA","6ºA"],["9ºA","8ºA"]]},
+  {name:"9ª Rodada",  folga:"9ºB", matches:[["1ºB","8ºB"],["3ºB","7ºA"],["2ºA","6ºA"],["3ºA","8ºA"],["1ºA","9ºA"]]},
+  {name:"10ª Rodada", folga:"8ºB", matches:[["9ºB","7ºA"],["1ºB","6ºA"],["3ºB","2ºA"],["2ºA","9ºA"],["3ºA","1ºA"]]},
+  {name:"11ª Rodada", folga:"7ºA", matches:[["8ºB","6ºA"],["9ºB","8ºA"],["1ºB","9ºA"],["3ºB","1ºA"],["2ºA","3ºA"]]},
+];
+
+INITIAL.mods[3].genders.misto = {
+  tipo:"roundrobin",
+  subtipo:"sets",
+  teams: VOLEI_TEAMS,
+  rounds: VOLEI_ROUNDS.map(r=>({
+    id:uid(), name:r.name, folga:r.folga,
+    matches:r.matches.map(([p1,p2])=>({id:uid(),p1,p2,winner:null,sets1:null,sets2:null}))
+  })),
+};
+
 window.USERS    = USERS;
 window.FLAGS    = FLAGS;
 window.MODS_META= MODS_META;
