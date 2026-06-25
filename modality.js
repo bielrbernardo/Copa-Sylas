@@ -50,7 +50,7 @@ function migrarGenders(mod) {
 }
 
 // ─── PÁGINA DE MODALIDADE ─────────────────────────────────────────────────────
-function ModalityPage({ mod: modRaw, onChange, canEdit, isMobile }) {
+function ModalityPage({ mod: modRaw, onChange, canEdit, isMobile, onResetMod, isAdmin }) {
   const mod       = migrarGenders(modRaw);
   const isNivel   = mod.tipo==="nivel";
   const defaultTab = isNivel?"fund_masc":"misto";
@@ -127,6 +127,10 @@ function ModalityPage({ mod: modRaw, onChange, canEdit, isMobile }) {
             <BRFlag size={20}/>
             {canEdit&&(
               <div style={{display:"flex",gap:6}}>
+                {isAdmin&&onResetMod&&(
+                  <button onClick={()=>{if(window.confirm(`Resetar só os resultados de ${mod.name}?\nNomes e estrutura são mantidos.`))onResetMod();}}
+                    style={{background:"rgba(251,146,60,.12)",color:"#fb923c",border:"1px solid rgba(251,146,60,.35)",borderRadius:6,padding:"6px 12px",fontWeight:800,fontSize:11,cursor:"pointer",fontFamily:"'Inter',sans-serif"}}>🔄 Reset</button>
+                )}
                 <button onClick={()=>setShowGerador(true)} style={{background:"linear-gradient(135deg,#FFDF00,#FFB800)",color:"#0a0f00",border:"none",borderRadius:6,padding:"6px 12px",fontWeight:800,fontSize:11,cursor:"pointer",fontFamily:"'Inter',sans-serif",boxShadow:"0 2px 10px rgba(255,223,0,.3)"}}>⚡ Gerar Chave</button>
                 <button onClick={()=>setShowBulk(true)} style={{background:"rgba(255,255,255,.08)",color:"#e2e8f0",border:"1px solid rgba(255,255,255,.15)",borderRadius:6,padding:"6px 12px",fontWeight:700,fontSize:11,cursor:"pointer",fontFamily:"'Inter',sans-serif"}}>+ Jogadores</button>
               </div>
