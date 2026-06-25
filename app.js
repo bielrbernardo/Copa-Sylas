@@ -117,6 +117,37 @@ function resetarResultados(data) {
   };
 }
 
+// ─── RESETAR SÓ UMA MODALIDADE ───────────────────────────────────────────────
+function resetarMod(data, modId) {
+  return {
+    ...data,
+    mods: data.mods.map(mod => {
+      if(mod.id !== modId) return mod;
+      return {
+        ...mod,
+        genders: Object.fromEntries(
+          Object.entries(mod.genders).map(([gKey,gVal]) => {
+            if(gVal.tipo==="roundrobin") return [gKey, {...gVal,
+              rounds: gVal.rounds.map(r=>({...r, matches:r.matches.map(m=>({
+                ...m, winner:null,
+                gols1: gVal.subtipo==="sets" ? undefined : null,
+                gols2: gVal.subtipo==="sets" ? undefined : null,
+                sets1: gVal.subtipo==="sets" ? null : undefined,
+                sets2: gVal.subtipo==="sets" ? null : undefined,
+              }))}))
+            }];
+            const zerado = gVal.rounds.map(r=>({
+              ...r, matches: r.matches.map(m=>({...m, winner:null}))
+            }));
+            return [gKey, {...gVal, rounds: propagate(zerado)}];
+          })
+        )
+      };
+    })
+  };
+}
+window.resetarMod = resetarMod;
+
 // ─── ADMIN ────────────────────────────────────────────────────────────────────
 function Admin({ data, setData }) {
   const [newMod,setNewMod]=React.useState("");
@@ -308,7 +339,13 @@ function App() {
           <div className="main-inner">
             {page==="home"&&<Home mods={data.mods} onNav={navTo} isMobile={isMobile}/>}
             {page==="admin"&&isAdmin&&<Admin data={data} setData={d=>{setData(d);if(window._fbSet)window._fbSet(d);}}/>}
-            {curMod&&<ModalityPage key={page} mod={curMod} onChange={handleChange} canEdit={canEdit} isMobile={isMobile}/>}
+            {curMod&&<ModalityPage key={page} mod={curMod} onChange={handleChange} canEdit={canEdit} isMobile={isMobile} isAdmin={isAdmin}
+              onResetMod={()=>{
+                const nd=window.resetarMod(data,curMod.id);
+                setData(nd);
+                if(window._fbSet)window._fbSet(nd);
+                showToast('Resultados de '+curMod.name+' resetados ✓');
+              }}/>}
           </div>
         </main>
       </div>
