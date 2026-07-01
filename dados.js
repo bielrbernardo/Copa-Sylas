@@ -50,70 +50,79 @@ const INITIAL = { mods: MODS_META.map(m => {
 // ═══════════════════════════════════════════════════════════════════════════════
 // 🏓 TÊNIS DE MESA — ENSINO FUNDAMENTAL MASCULINO
 // Estrutura exata: 20 jogadores, 5 fases
-// Fase Inicial (20) → Oitavas (10 jogos) → Quartas (5 jogos) → Semi (2) → Final (1)
+// Fase Inicial (32) → Oitavas (16 jogos) → Quartas (8 jogos) → Semi (4) → Final (2)
 // ═══════════════════════════════════════════════════════════════════════════════
 INITIAL.mods[0].genders.fund_masc.rounds = [
   {
     id:"tm_r0", name:"Fase Inicial",
     matches:[
       {id:"t01",p1:"CHRISTOPHER", p2:null, winner:null},
-      {id:"t02",p1:"JOSÉ",        p2:null, winner:null},
-      {id:"t03",p1:"PAULO",       p2:null, winner:null},
-      {id:"t04",p1:"JOÃO PEDRO",  p2:null, winner:null},
-      {id:"t05",p1:"VITOR",       p2:null, winner:null},
-      {id:"t06",p1:"RUAN",        p2:null, winner:null},
-      {id:"t07",p1:"JULLIO",      p2:null, winner:null},
-      {id:"t08",p1:"EDUARDO",     p2:null, winner:null},
-      {id:"t09",p1:"PEDRO V",     p2:null, winner:null},
-      {id:"t10",p1:"LEO A",       p2:null, winner:null},
-      {id:"t11",p1:"LUIZ H",      p2:null, winner:null},
-      {id:"t12",p1:"GUSTAVO",     p2:null, winner:null},
-      {id:"t13",p1:"ENDREW",      p2:null, winner:null},
-      {id:"t14",p1:"PIETRO",      p2:null, winner:null},
-      {id:"t15",p1:"MARCELO",     p2:null, winner:null},
-      {id:"t16",p1:"DAVI",        p2:null, winner:null},
-      {id:"t17",p1:"LEONARDO D",  p2:null, winner:null},
-      {id:"t18",p1:"ARTHUR",      p2:null, winner:null},
-      {id:"t19",p1:"HECTOR",      p2:null, winner:null},
-      {id:"t20",p1:"MARCOS",      p2:null, winner:null},
+      {id:"t02",p1:"BYE",        p2:null, winner:null},
+      {id:"t03",p1:"JOSÉ",       p2:null, winner:null},
+      {id:"t04",p1:"BYE",  p2:null, winner:null},
+      {id:"t05",p1:"PAULO",       p2:null, winner:null},
+      {id:"t06",p1:"BYE",        p2:null, winner:null},
+      {id:"t07",p1:"JOÃO PEDRO",      p2:null, winner:null},
+      {id:"t08",p1:"BYE",     p2:null, winner:null},
+      {id:"t09",p1:"VITOR",     p2:null, winner:null},
+      {id:"t10",p1:"BYE",       p2:null, winner:null},
+      {id:"t11",p1:"RUAN",      p2:null, winner:null},
+      {id:"t12",p1:"BYE",     p2:null, winner:null},
+      {id:"t13",p1:"JULLIO",      p2:null, winner:null},
+      {id:"t14",p1:"EDUARDO",      p2:null, winner:null},
+      {id:"t15",p1:"PEDRO V.",     p2:null, winner:null},
+      {id:"t16",p1:"LEO A.",        p2:null, winner:null},
+      {id:"t17",p1:"LUIS H",  p2:null, winner:null},
+      {id:"t18",p1:"GUSTAVO",      p2:null, winner:null},
+      {id:"t19",p1:"ENDREW",      p2:null, winner:null},
+      {id:"t20",p1:"PIETRO",      p2:null, winner:null},
+      {id:"t21",p1:"MARCELO",      p2:null, winner:null},
+      {id:"t22",p1:"BYE",      p2:null, winner:null},
+      {id:"t23",p1:"DAVI",      p2:null, winner:null},
+      {id:"t24",p1:"BYE",      p2:null, winner:null},
+      {id:"t25",p1:"LEONARDO D",      p2:null, winner:null},
+      {id:"t26",p1:"BYE",      p2:null, winner:null},
+      {id:"t27",p1:"ARTHUR",      p2:null, winner:null},
+      {id:"t28",p1:"BYE",      p2:null, winner:null},
+      {id:"t29",p1:"HECTOR",      p2:null, winner:null},
+      {id:"t30",p1:"BYE",      p2:null, winner:null},
+      {id:"t31",p1:"MARCOS",      p2:null, winner:null},
+      {id:"t32",p1:"BYE",      p2:null, winner:null},
     ]
   },
   {
     id:"tm_r1", name:"Oitavas de Final",
     matches:[
-      {id:"t21",p1:"CHRISTOPHER", p2:"JOSÉ",       winner:null},
-      {id:"t22",p1:"PAULO",       p2:"JOÃO PEDRO", winner:null},
-      {id:"t23",p1:"VITOR",       p2:"RUAN",       winner:null},
-      {id:"t24",p1:"JULLIO",      p2:"EDUARDO",    winner:null},
-      {id:"t25",p1:"PEDRO V",     p2:"LEO A",      winner:null},
-      {id:"t26",p1:"LUIZ H",      p2:"GUSTAVO",    winner:null},
-      {id:"t27",p1:"ENDREW",      p2:"PIETRO",     winner:null},
-      {id:"t28",p1:"MARCELO",     p2:"DAVI",       winner:null},
-      {id:"t29",p1:"LEONARDO D",  p2:"ARTHUR",     winner:null},
-      {id:"t30",p1:"HECTOR",      p2:"MARCOS",     winner:null},
+      {id:"t33",p1:"CHRISTOPHER", p2:"JOSÉ",       winner:null},
+      {id:"t34",p1:"PAULO",       p2:"JOÃO PEDRO", winner:null},
+      {id:"t35",p1:"VITOR",       p2:"RUAN",       winner:null},
+      {id:"t36",p1:"EDUARDO",     p2:"LEONARDO A.",winner:null},
+      {id:"t37",p1:"GUSTAVO",     p2:"PIETRO",     winner:null},
+      {id:"t38",p1:"MARCELO",     p2:"DAVI",       winner:null},
+      {id:"t39",p1:"LEONARDO D.", p2:"ARTHUR",     winner:null},
+      {id:"t40",p1:"HECTOR",      p2:"MARCOS",     winner:null},
     ]
   },
   {
     id:"tm_r2", name:"Quartas de Final",
     matches:[
-      {id:"t31",p1:null,p2:null,winner:null},
-      {id:"t32",p1:null,p2:null,winner:null},
-      {id:"t33",p1:null,p2:null,winner:null},
-      {id:"t34",p1:null,p2:null,winner:null},
-      {id:"t35",p1:null,p2:null,winner:null},
-    ]
+      {id:"t41",p1:"JOSÉ",p2:"JOÃO PEDRO",winner:null},
+      {id:"t42",p1:null,p2:null,winner:null},
+      {id:"t43",p1:null,p2:"DAVI",winner:null},
+      {id:"t44",p1:null,p2:"MARCOS",winner:null},
+         ]
   },
   {
     id:"tm_r3", name:"Semifinal",
     matches:[
-      {id:"t36",p1:null,p2:null,winner:null},
-      {id:"t37",p1:null,p2:null,winner:null},
+      {id:"t45",p1:null,p2:null,winner:null},
+      {id:"t46",p1:null,p2:null,winner:null},
     ]
   },
   {
     id:"tm_r4", name:"Final",
     matches:[
-      {id:"t38",p1:null,p2:null,winner:null},
+      {id:"t47",p1:null,p2:null,winner:null},
     ]
   },
 ];
@@ -121,13 +130,13 @@ INITIAL.mods[0].genders.fund_masc.rounds = [
 // Fundamental Feminino Estável
 INITIAL.mods[0].genders.fund_fem.rounds = [
   {id:"tf1",name:"Quartas de Final",matches:[
-    {id:"f1",p1:"Ana Bella",   p2:"Vitória",      winner:null},
-    {id:"f2",p1:"Thifany",     p2:"BYE",          winner:"Thifany"},
-    {id:"f3",p1:"Milena",      p2:"Maria Cecília", winner:null},
+    {id:"f1",p1:"Ana Bella",   p2:"BYE",      winner:"Ana Bella"},
+    {id:"f2",p1:"Thifany",     p2:"Vitória",          winner:"Thifany"},
+    {id:"f3",p1:"Milena",      p2:"Maria Cecília", winner:"Maria Cecília"},
     {id:"f4",p1:"Maria Vitória",p2:"BYE",         winner:"Maria Vitória"},
   ]},
-  {id:"tf2",name:"Semifinal",matches:[{id:"f5",p1:null,p2:null,winner:null},{id:"f6",p1:null,p2:null,winner:null}]},
-  {id:"tf3",name:"Final",    matches:[{id:"f7",p1:null,p2:null,winner:null}]},
+  {id:"tf2",name:"Semifinal",matches:[{id:"f5",p1:"Ana Bella",p2:"Thifany",winner:"Thifany"},{id:"f6",p1:"Maria Cecília",p2:"Maria Vitória",winner:"Maria Vitória"}]},
+  {id:"tf3",name:"Final",    matches:[{id:"f7",p1:"Thifany",p2:"Maria Vitória",winner:"Maria Vitória"}]},
 ];
 
 // Futsal — Rodadas Round Robin
